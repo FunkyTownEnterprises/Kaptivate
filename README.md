@@ -25,11 +25,11 @@ This library deals in <em>raw key events</em>, NOT digested character messages. 
 References
 -------------------------
 
-http://msdn.microsoft.com/en-us/library/ms644959(v=VS.85).aspx#wh_keyboardhook
-http://msdn.microsoft.com/en-us/library/ms645543(v=VS.85).aspx
-http://msdn.microsoft.com/en-us/library/ms646310(VS.85).aspx
-http://msdn.microsoft.com/en-us/library/dd375731(v=VS.85).aspx
-http://msdn.microsoft.com/en-us/library/system.windows.forms.nativewindow.aspx
+[http://msdn.microsoft.com/en-us/library/ms644959(v=VS.85).aspx#wh_keyboardhook]
+[http://msdn.microsoft.com/en-us/library/ms645543(v=VS.85).aspx]
+[http://msdn.microsoft.com/en-us/library/ms646310(VS.85).aspx]
+[http://msdn.microsoft.com/en-us/library/dd375731(v=VS.85).aspx]
+[http://msdn.microsoft.com/en-us/library/system.windows.forms.nativewindow.aspx]
 
 Requirements
 -------------------------

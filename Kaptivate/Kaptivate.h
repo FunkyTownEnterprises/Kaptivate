@@ -13,8 +13,8 @@
 // This class is exported from the Kaptivate.dll
 class KAPTIVATE_API CKaptivate {
 public:
-	CKaptivate(void);
-	// TODO: add your methods here.
+    CKaptivate(void);
+    // TODO: add your methods here.
 };
 
 extern KAPTIVATE_API int nKaptivate;

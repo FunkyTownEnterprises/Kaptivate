@@ -34,7 +34,6 @@
 
 #include <windows.h>
 #include <stdio.h>
-#include <malloc.h>
 
 // Here begins our magic. The Win32 API actually loads this DLL into its own memory
 // space. The only way to communicate is with a shared memory segment. Note that you

@@ -35,8 +35,8 @@
 #include <windows.h>
 #include <stdio.h>
 
-// This function in this file are ultimately responsible for determining wheter or not
-// other apps ever get a particular mouse or keyboard event.
+// The functions in this file are ultimately responsible for determining wheter or not
+// other apps receive a particular mouse or keyboard event.
 
 // <magic>
 #pragma data_seg (".SHAREDMEMORY")
@@ -45,9 +45,9 @@
 // communicate is with a shared memory segment. Note that you can't share things on
 // the heap (i.e. pointers are useless).
 
-// Because the functions below are executed in a seperate memory space, communication
-// can only be accomplished either with sockets or windows messaging. I'll let you
-// guess which one we went with.
+// Because the functions below are executed in a seperate memory space, calling off
+// to other functions within this library can only be accomplished either with sockets
+// or windows messaging. I'll let you guess which one we went with.
 
 static short _initialized    = 0; // Are we ready to handle things?
 static short _paused         = 0; // In paused mode, hook messages are passed along as normal

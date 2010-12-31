@@ -201,6 +201,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\KaptivateExceptions.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -232,6 +236,10 @@
 			</File>
 			<File
 				RelativePath=".\Kaptivate.h"
+				>
+			</File>
+			<File
+				RelativePath=".\KaptivateExceptions.h"
 				>
 			</File>
 			<File

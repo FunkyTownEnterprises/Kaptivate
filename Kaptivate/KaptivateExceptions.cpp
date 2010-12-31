@@ -1,5 +1,5 @@
 /*
- * Kaptivate.cpp
+ * KaptivateExceptions.cpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -30,41 +30,30 @@
  */
 
 #include "stdafx.h"
-#include "Kaptivate.h"
 #include "KaptivateExceptions.h"
 
-#include <iostream>
 using namespace std;
 
-// Singleton static members
-bool Kaptivate::instanceFlag    = false;
-Kaptivate* Kaptivate::singleton = NULL;
+////////////////////////////////////////////////////////////////////////////////
+// A generic exception for Kaptivate
 
-Kaptivate::Kaptivate()
+KaptivateException::KaptivateException()
+    : exception()
+{
+    this->message = "Unspecified Kaptivate exception";
+}
+
+KaptivateException::KaptivateException(string message)
+    : exception()
+{
+    this->message = message;
+}
+
+KaptivateException::~KaptivateException() throw()
 {
 }
 
-Kaptivate::~Kaptivate()
+const char* KaptivateException::what() const throw()
 {
+    return this->message.c_str();
 }
-
-// Get an instance of this thing
-Kaptivate* Kaptivate::getInstance()
-{
-    if(!instanceFlag)
-    {
-        try
-        {
-            singleton = new Kaptivate();
-        }
-        catch(bad_alloc&)
-        {
-            throw KaptivateException("Unable to allocate memory for the Kaptivate singleton");
-        }
-
-        instanceFlag = true;
-    }
-
-    return singleton;
-}
-

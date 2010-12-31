@@ -1,9 +1,34 @@
-// The following ifdef block is the standard way of creating macros which make exporting 
-// from a DLL simpler. All files within this DLL are compiled with the KAPTIVATE_EXPORTS
-// symbol defined on the command line. this symbol should not be defined on any project
-// that uses this DLL. This way any other project whose source files include this file see 
-// KAPTIVATE_API functions as being imported from a DLL, whereas this DLL sees symbols
-// defined with this macro as being exported.
+/*
+ * Kaptivate.h
+ * This file is a part of Kaptivate
+ * https://github.com/FunkyTownEnterprises/Kaptivate
+ *
+ * Copyright (c) 2010 Ben Cable, Chris Eberle
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifdef KAPTIVATE_EXPORTS
 #define KAPTIVATE_API __declspec(dllexport)
 #else
@@ -11,12 +36,18 @@
 #endif
 
 // This class is exported from the Kaptivate.dll
-class KAPTIVATE_API CKaptivate {
+class KAPTIVATE_API Kaptivate
+{
+private:
+
+    // Singleton methods
+    Kaptivate();
+    static bool instanceFlag;
+    static Kaptivate *singleton;
+
 public:
-    CKaptivate(void);
-    // TODO: add your methods here.
+
+    // More singleton methods
+    ~Kaptivate();
+    static Kaptivate* getInstance();
 };
-
-extern KAPTIVATE_API int nKaptivate;
-
-KAPTIVATE_API int fnKaptivate(void);

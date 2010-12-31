@@ -197,7 +197,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Kaptivate.cpp"
+				RelativePath=".\kaptivate.cpp"
 				>
 			</File>
 			<File
@@ -231,7 +231,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Kaptivate.h"
+				RelativePath=".\kaptivate.h"
 				>
 			</File>
 			<File

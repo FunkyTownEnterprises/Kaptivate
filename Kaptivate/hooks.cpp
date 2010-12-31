@@ -35,12 +35,19 @@
 #include <windows.h>
 #include <stdio.h>
 
-// Here begins our magic. The Win32 API actually loads this DLL into its own memory
-// space. The only way to communicate is with a shared memory segment. Note that you
-// can't share things on the heap (i.e. pointers are useless).
+// This function in this file are ultimately responsible for determining wheter or not
+// other apps ever get a particular mouse or keyboard event.
 
 // <magic>
 #pragma data_seg (".SHAREDMEMORY")
+
+// The Win32 API actually loads this DLL into its own memory space. The only way to
+// communicate is with a shared memory segment. Note that you can't share things on
+// the heap (i.e. pointers are useless).
+
+// Because the functions below are executed in a seperate memory space, communication
+// can only be accomplished either with sockets or windows messaging. I'll let you
+// guess which one we went with.
 
 static short _initialized    = 0; // Are we ready to handle things?
 static short _paused         = 0; // In paused mode, hook messages are passed along as normal
@@ -51,19 +58,19 @@ static short _kbHookAlive    = 0; // A failsafe of sorts for the keyboard
 static short _mouseHookAlive = 0; // Another failsafe for the mouse
 static UINT  _keyboardMsg    = 0; // The custom keyboard message (generated with RegisterWindowMessage)
 static UINT  _mouseMsg       = 0; // The custom mouse message
-static UINT  _msgTimeout     = 0; // How long to wait before declaring it defunct?
+static UINT  _msgTimeout     = 0; // How long to wait before declaring it defunct (in milliseconds)
 
 #pragma data_seg()
 #pragma comment(linker,"/SECTION:.SHAREDMEMORY,RWS")
 // </magic>
 
-extern HMODULE __kaptivateDllModule;
+extern HMODULE kaptivateDllModule;
 
 // Process a keyboard event. We can choose to pass the message along, or consume it.
 LRESULT CALLBACK keyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
 {
     // Should we even try?
-    if(nCode < 0 || _paused || _callbackHwnd == 0 || _kbHookAlive == 0 || _initialized == 0 || _keyboardMsg == 0)
+    if(nCode < 0 || _paused == 1 || _callbackHwnd == 0 || _kbHookAlive == 0 || _initialized == 0 || _keyboardMsg == 0)
     {
         return CallNextHookEx(_keyboardHook, nCode, wParam, lParam);
     }
@@ -71,6 +78,7 @@ LRESULT CALLBACK keyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
     LRESULT res;
     DWORD dwres = 0;
 
+    // Wha'cha wanna do?
     if(0 == (res = SendMessageTimeout(_callbackHwnd, _keyboardMsg, wParam, lParam, SMTO_ABORTIFHUNG, _msgTimeout, &dwres)))
     {
         if(ERROR_TIMEOUT == GetLastError())
@@ -80,6 +88,7 @@ LRESULT CALLBACK keyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
         }
     }
 
+    // > 0 means consume the keystroke
     if(dwres > 0)
     {
         // If the hook procedure processed the message, it may return a nonzero value
@@ -96,7 +105,7 @@ LRESULT CALLBACK keyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK mouseEvent(int nCode, WPARAM wParam, LPARAM lParam)
 {
     // Derp
-    if(nCode < 0 || _paused || _callbackHwnd == 0 || _mouseHookAlive == 0 || _initialized == 0 || _mouseMsg == 0)
+    if(nCode < 0 || _paused == 1 || _callbackHwnd == 0 || _mouseHookAlive == 0 || _initialized == 0 || _mouseMsg == 0)
     {
         return CallNextHookEx(_mouseHook, nCode, wParam, lParam);
     }
@@ -104,6 +113,7 @@ LRESULT CALLBACK mouseEvent(int nCode, WPARAM wParam, LPARAM lParam)
     LRESULT res;
     DWORD dwres = 0;
 
+    // Wha'cha wanna do?
     if(0 == (res = SendMessageTimeout(_callbackHwnd, _mouseMsg, wParam, lParam, SMTO_ABORTIFHUNG, _msgTimeout, &dwres)))
     {
         if(ERROR_TIMEOUT == GetLastError())
@@ -113,6 +123,7 @@ LRESULT CALLBACK mouseEvent(int nCode, WPARAM wParam, LPARAM lParam)
         }
     }
 
+    // > 0 means consume the mouse event
     if(dwres > 0)
     {
         // If the hook procedure processed the message, it may return a nonzero value
@@ -131,18 +142,18 @@ int hookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT 
     if(_initialized)
         return 0;
 
-    // Who are we talking to?
+    // Who are we talking to (and how)?
     _callbackHwnd = callbackWindow;
     _keyboardMsg  = keyboardMessage;
     _mouseMsg     = mouseMessage;
     _msgTimeout   = messageTimeout;    
 
     // Set up a global keyboard hook
-    if(0 == (_keyboardHook = SetWindowsHookEx(WH_KEYBOARD, keyboardEvent, __kaptivateDllModule, 0)))
+    if(0 == (_keyboardHook = SetWindowsHookEx(WH_KEYBOARD, keyboardEvent, kaptivateDllModule, 0)))
         return -1;
 
     // Set up a global mouse hook
-    if(0 == (_mouseHook = SetWindowsHookEx(WH_MOUSE, mouseEvent, __kaptivateDllModule, 0)))
+    if(0 == (_mouseHook = SetWindowsHookEx(WH_MOUSE, mouseEvent, kaptivateDllModule, 0)))
         return -2;
 
     // We're ready to start processing keyboard / mouse events
@@ -184,15 +195,25 @@ int hookUninit()
 }
 
 // Pause all processing of hooks
-void hookPause()
+int hookPause()
 {
     if(_initialized)
+    {
         _paused = 1;
+        return 0;
+    }
+
+    return -1;
 }
 
 // Resume all processing of hooks
-void hookUnpause()
+int hookUnpause()
 {
     if(_initialized)
+    {
         _paused = 0;
+        return 0;
+    }
+
+    return -1;
 }

@@ -32,7 +32,7 @@
 #include "stdafx.h"
 
 // Needed for global hooks
-HMODULE __kaptivateDllModule = 0;
+HMODULE kaptivateDllModule = 0;
 
 // Entry point for the DLL application.
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -44,8 +44,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     {
     case DLL_PROCESS_ATTACH:
     case DLL_THREAD_ATTACH:
-        if(__kaptivateDllModule == 0)
-            __kaptivateDllModule = hModule;
+        if(kaptivateDllModule == 0)
+            kaptivateDllModule = hModule;
         break;
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:

@@ -34,5 +34,5 @@
 int hookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT messageTimeout);
 int hookUninit();
 
-void hookPause();
-void hookUnpause();
+int hookPause();
+int hookUnpause();

@@ -30,8 +30,8 @@
  */
 
 #include "stdafx.h"
-#include "Kaptivate.h"
-#include "KaptivateExceptions.h"
+#include "kaptivate.h"
+#include "kaptivate_exceptions.h"
 
 #include <iostream>
 using namespace std;

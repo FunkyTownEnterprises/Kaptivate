@@ -30,7 +30,7 @@
  */
 
 #include "stdafx.h"
-#include "KaptivateExceptions.h"
+#include "kaptivate_exceptions.h"
 
 using namespace std;
 

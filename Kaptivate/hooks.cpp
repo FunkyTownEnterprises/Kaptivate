@@ -42,13 +42,13 @@
 // <magic>
 #pragma data_seg (".SHAREDMEMORY")
 
-static int   _initialized    = 0; // Are we ready to handle things?
-static int   _paused         = 0; // In paused mode, hook messages are passed along as normal
+static short _initialized    = 0; // Are we ready to handle things?
+static short _paused         = 0; // In paused mode, hook messages are passed along as normal
 static HHOOK _keyboardHook   = 0; // A handle for the keyboard hook
 static HHOOK _mouseHook      = 0; // Ditto for the mouse hook
 static HWND  _callbackHwnd   = 0; // The Win32 window we'll be asking for decisions
-static int   _kbHookAlive    = 0; // A failsafe of sorts for the keyboard
-static int   _mouseHookAlive = 0; // Another failsafe for the mouse
+static short _kbHookAlive    = 0; // A failsafe of sorts for the keyboard
+static short _mouseHookAlive = 0; // Another failsafe for the mouse
 static UINT  _keyboardMsg    = 0; // The custom keyboard message (generated with RegisterWindowMessage)
 static UINT  _mouseMsg       = 0; // The custom mouse message
 static UINT  _msgTimeout     = 0; // How long to wait before declaring it defunct?

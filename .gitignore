@@ -1,3 +1,5 @@
 
 *.ncb
 *.suo
+/Debug
+/Kaptivate/Debug

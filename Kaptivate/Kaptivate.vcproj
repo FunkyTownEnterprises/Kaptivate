@@ -193,6 +193,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\hooks.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Kaptivate.cpp"
 				>
 			</File>
@@ -222,6 +226,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\hooks.h"
+				>
+			</File>
 			<File
 				RelativePath=".\Kaptivate.h"
 				>

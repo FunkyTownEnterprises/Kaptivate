@@ -154,13 +154,19 @@ int kaptivateHookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessa
     _mouseMsg     = mouseMessage;
     _msgTimeout   = messageTimeout;
 
-    // Set up a global keyboard hook
-    if(0 == (_keyboardHook = SetWindowsHookEx(WH_KEYBOARD, keyboardEvent, kaptivateDllModule, 0)))
-        return -1;
+    // Set up a global keyboard hook, if desired
+    if(keyboardMessage > 0)
+    {
+        if(0 == (_keyboardHook = SetWindowsHookEx(WH_KEYBOARD, keyboardEvent, kaptivateDllModule, 0)))
+            return -1;
+    }
 
-    // Set up a global mouse hook
-    if(0 == (_mouseHook = SetWindowsHookEx(WH_MOUSE, mouseEvent, kaptivateDllModule, 0)))
-        return -2;
+    // Set up a global mouse hook, if desired
+    if(mouseMessage > 0)
+    {
+        if(0 == (_mouseHook = SetWindowsHookEx(WH_MOUSE, mouseEvent, kaptivateDllModule, 0)))
+            return -2;
+    }
 
     // We're ready to start processing keyboard / mouse events
     _paused         = paused;

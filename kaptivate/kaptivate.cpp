@@ -32,10 +32,14 @@
 #include "stdafx.h"
 #include "kaptivate.h"
 #include "kaptivate_exceptions.h"
+#include "hooks.h"
 
 #include <iostream>
 using namespace std;
 using namespace Kaptivate;
+
+////////////////////////////////////////////////////////////////////////////////
+// Creation / destruction
 
 // Singleton static members
 bool KaptivateAPI::instanceFlag       = false;
@@ -43,6 +47,8 @@ KaptivateAPI* KaptivateAPI::singleton = NULL;
 
 KaptivateAPI::KaptivateAPI()
 {
+    running   = false;
+    suspended = false;
 }
 
 KaptivateAPI::~KaptivateAPI()
@@ -80,4 +86,85 @@ void KaptivateAPI::destroyInstance()
     singleton = NULL;
 
     instanceFlag = false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Main event loop (seperate thread)
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Start / Stop
+
+void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSuspended)
+{
+    if(!wantMouse && !wantKeyboard)
+        throw KaptivateException("He who wants nothing has everything");
+    if(running)
+        throw KaptivateException("Kaptivate is already running");
+
+}
+
+void KaptivateAPI::stopCapture()
+{
+    if(!running)
+        throw KaptivateException("Kaptivate is not running");
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Suspend / Resume
+
+void KaptivateAPI::suspendCapture()
+{
+}
+
+void KaptivateAPI::resumeCapture()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Status
+
+bool KaptivateAPI::isRunning() const
+{
+    return running;
+}
+
+bool KaptivateAPI::isSuspended() const
+{
+    return suspended;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Device enumeration
+
+vector<KeyboardInfo> KaptivateAPI::enumerateKeyboards()
+{
+    vector<KeyboardInfo> dummy;
+    return dummy;
+}
+
+vector<MouseInfo> KaptivateAPI::enumerateMice()
+{
+    vector<MouseInfo> dummy;
+    return dummy;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Event handler registration / unregistration
+
+void KaptivateAPI::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)
+{
+}
+
+void KaptivateAPI::resgisterMouseHandler(string idRegex, MouseHandler* handler)
+{
+}
+
+void KaptivateAPI::unregisterKeyboardHandler(KeyboardHandler* handler)
+{
+}
+
+void KaptivateAPI::unregisterMouseHandler(MouseHandler* handler)
+{
 }

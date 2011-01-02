@@ -103,6 +103,10 @@ namespace Kaptivate
         static bool instanceFlag;
         static KaptivateAPI *singleton;
 
+        // Status
+        bool running;
+        bool suspended;
+
     public:
 
         // Public singleton methods
@@ -122,8 +126,8 @@ namespace Kaptivate
         void resumeCapture();
 
         // Status
-        bool isRunning();
-        bool isSuspended();
+        bool isRunning() const;
+        bool isSuspended() const;
 
         // Enumeration
         std::vector<KeyboardInfo> enumerateKeyboards();
@@ -136,4 +140,3 @@ namespace Kaptivate
         void unregisterMouseHandler(MouseHandler* handler);
     };
 }
-

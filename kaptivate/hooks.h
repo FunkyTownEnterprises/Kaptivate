@@ -3,7 +3,7 @@
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
- * Copyright (c) 2010 Ben Cable, Chris Eberle
+ * Copyright (c) 2011 Ben Cable, Chris Eberle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@
 
 #pragma once
 
-int hookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT messageTimeout);
-int hookUninit();
+int kaptivateHookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT messageTimeout, short paused);
+int kaptivateHookUninit();
 
-int hookPause();
-int hookUnpause();
+int kaptivateHookPause();
+int kaptivateHookUnpause();

@@ -3,7 +3,7 @@
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
- * Copyright (c) 2010 Ben Cable, Chris Eberle
+ * Copyright (c) 2011 Ben Cable, Chris Eberle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,19 +35,105 @@
 #define KAPTIVATE_API __declspec(dllimport)
 #endif
 
-// This class is exported from the Kaptivate.dll
-class KAPTIVATE_API Kaptivate
+#include <iostream>
+#include <string>
+#include <vector>
+
+namespace Kaptivate
 {
-private:
+    struct KeyboardInfo
+    {
+        std::string id;
+    };
 
-    // Singleton methods
-    Kaptivate();
-    static bool instanceFlag;
-    static Kaptivate *singleton;
+    class KAPTIVATE_API KeyboardEvent
+    {
+    public:
+        KeyboardEvent();
+        ~KeyboardEvent();
+    };
 
-public:
+    class KAPTIVATE_API KeyboardHandler
+    {
+    public:
+        virtual void HandleKeyEvent(KeyboardEvent& evt) = 0;
+    };
 
-    // More singleton methods
-    ~Kaptivate();
-    static Kaptivate* getInstance();
-};
+    struct MouseInfo
+    {
+        std::string id;
+    };
+
+    class KAPTIVATE_API MouseButtonEvent
+    {
+    public:
+        MouseButtonEvent();
+        ~MouseButtonEvent();
+    };
+
+    class KAPTIVATE_API MouseWheelEvent
+    {
+    public:
+        MouseWheelEvent();
+        ~MouseWheelEvent();
+    };
+
+    class KAPTIVATE_API MouseMoveEvent
+    {
+    public:
+        MouseMoveEvent();
+        ~MouseMoveEvent();
+    };
+
+    class KAPTIVATE_API MouseHandler
+    {
+    public:
+        virtual void HandleButtonEvent(MouseButtonEvent& evt) = 0;
+        virtual void HandleWheelEvent(MouseWheelEvent& evt) = 0;
+        virtual void HandleMoveEvent(MouseMoveEvent& evt) = 0;
+    };
+
+    // The main Kaptivate API
+    class KAPTIVATE_API KaptivateAPI
+    {
+    private:
+
+        // Private singleton methods
+        KaptivateAPI();
+        static bool instanceFlag;
+        static KaptivateAPI *singleton;
+
+    public:
+
+        // Public singleton methods
+        ~KaptivateAPI();
+        static KaptivateAPI* getInstance();
+        static void destroyInstance();
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // Kaptivate API methods
+
+        // Start / stop
+        void startCapture(bool wantMouse = true, bool wantKeyboard = true, bool startSuspended = false);
+        void stopCapture();
+
+        // Suspend / resume
+        void suspendCapture();
+        void resumeCapture();
+
+        // Status
+        bool isRunning();
+        bool isSuspended();
+
+        // Enumeration
+        std::vector<KeyboardInfo> enumerateKeyboards();
+        std::vector<MouseInfo> enumerateMice();
+
+        // Registration
+        void registerKeyboardHandler(std::string idRegex, KeyboardHandler* handler);
+        void resgisterMouseHandler(std::string idRegex, MouseHandler* handler);
+        void unregisterKeyboardHandler(KeyboardHandler* handler);
+        void unregisterMouseHandler(MouseHandler* handler);
+    };
+}
+

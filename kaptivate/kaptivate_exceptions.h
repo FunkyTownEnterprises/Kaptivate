@@ -3,7 +3,7 @@
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
- * Copyright (c) 2010 Ben Cable, Chris Eberle
+ * Copyright (c) 2011 Ben Cable, Chris Eberle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,16 +36,18 @@
 #include <string>
 
 // Custom exceptions for Kaptivate
-
-class KaptivateException : public std::exception
+namespace Kaptivate
 {
-private:
-    std::string message;
+    class KaptivateException : public std::exception
+    {
+    private:
+        std::string message;
 
-public:
-    KaptivateException();
-    KaptivateException(std::string message);
+    public:
+        KaptivateException();
+        KaptivateException(std::string message);
 
-    virtual ~KaptivateException() throw();
-    virtual const char* what() const throw();
-};
+        virtual ~KaptivateException() throw();
+        virtual const char* what() const throw();
+    };
+}

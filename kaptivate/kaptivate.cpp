@@ -3,7 +3,7 @@
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
- * Copyright (c) 2010 Ben Cable, Chris Eberle
+ * Copyright (c) 2011 Ben Cable, Chris Eberle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,27 +35,29 @@
 
 #include <iostream>
 using namespace std;
+using namespace Kaptivate;
 
 // Singleton static members
-bool Kaptivate::instanceFlag    = false;
-Kaptivate* Kaptivate::singleton = NULL;
+bool KaptivateAPI::instanceFlag       = false;
+KaptivateAPI* KaptivateAPI::singleton = NULL;
 
-Kaptivate::Kaptivate()
+KaptivateAPI::KaptivateAPI()
 {
 }
 
-Kaptivate::~Kaptivate()
+KaptivateAPI::~KaptivateAPI()
 {
 }
 
 // Get an instance of this thing
-Kaptivate* Kaptivate::getInstance()
+KaptivateAPI* KaptivateAPI::getInstance()
 {
     if(!instanceFlag)
     {
         try
         {
-            singleton = new Kaptivate();
+            if(NULL == (singleton = new KaptivateAPI()))
+                throw bad_alloc();
         }
         catch(bad_alloc&)
         {
@@ -68,3 +70,14 @@ Kaptivate* Kaptivate::getInstance()
     return singleton;
 }
 
+// Destroy the singleton
+void KaptivateAPI::destroyInstance()
+{
+    if(!instanceFlag || singleton == NULL)
+        return;
+
+    delete singleton;
+    singleton = NULL;
+
+    instanceFlag = false;
+}

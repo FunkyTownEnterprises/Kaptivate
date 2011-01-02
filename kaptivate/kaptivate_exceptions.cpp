@@ -3,7 +3,7 @@
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
- * Copyright (c) 2010 Ben Cable, Chris Eberle
+ * Copyright (c) 2011 Ben Cable, Chris Eberle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 #include "kaptivate_exceptions.h"
 
 using namespace std;
+using namespace Kaptivate;
 
 ////////////////////////////////////////////////////////////////////////////////
 // A generic exception for Kaptivate

@@ -3,7 +3,7 @@
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
- * Copyright (c) 2010 Ben Cable, Chris Eberle
+ * Copyright (c) 2011 Ben Cable, Chris Eberle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,8 +67,11 @@ static UINT  _msgTimeout     = 0; // How long to wait before declaring it defunc
 extern HMODULE kaptivateDllModule;
 
 // Process a keyboard event. We can choose to pass the message along, or consume it.
-LRESULT CALLBACK keyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK keyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
 {
+    // Fun little tidbit: since this function is executed in a seperate memory space by a different
+    // thread, it's impossible to debug this particular function (well, there's always file IO)
+
     // Should we even try?
     if(nCode < 0 || _paused == 1 || _callbackHwnd == 0 || _kbHookAlive == 0 || _initialized == 0 || _keyboardMsg == 0)
     {
@@ -102,8 +105,11 @@ LRESULT CALLBACK keyboardEvent(int nCode, WPARAM wParam, LPARAM lParam)
 }
 
 // Process a mouse event. Again, we can either pass it along or consume it.
-LRESULT CALLBACK mouseEvent(int nCode, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK mouseEvent(int nCode, WPARAM wParam, LPARAM lParam)
 {
+    // Fun little tidbit: since this function is executed in a seperate memory space by a different
+    // thread, it's impossible to debug this particular function (well, there's always file IO)
+
     // Derp
     if(nCode < 0 || _paused == 1 || _callbackHwnd == 0 || _mouseHookAlive == 0 || _initialized == 0 || _mouseMsg == 0)
     {
@@ -137,7 +143,7 @@ LRESULT CALLBACK mouseEvent(int nCode, WPARAM wParam, LPARAM lParam)
 }
 
 // Set up the hooks
-int hookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT messageTimeout)
+int kaptivateHookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT messageTimeout, short paused)
 {
     if(_initialized)
         return 0;
@@ -146,7 +152,7 @@ int hookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT 
     _callbackHwnd = callbackWindow;
     _keyboardMsg  = keyboardMessage;
     _mouseMsg     = mouseMessage;
-    _msgTimeout   = messageTimeout;    
+    _msgTimeout   = messageTimeout;
 
     // Set up a global keyboard hook
     if(0 == (_keyboardHook = SetWindowsHookEx(WH_KEYBOARD, keyboardEvent, kaptivateDllModule, 0)))
@@ -157,6 +163,7 @@ int hookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT 
         return -2;
 
     // We're ready to start processing keyboard / mouse events
+    _paused         = paused;
     _initialized    = 1;
     _kbHookAlive    = 1;
     _mouseHookAlive = 1;
@@ -165,7 +172,7 @@ int hookInit(HWND callbackWindow, UINT keyboardMessage, UINT mouseMessage, UINT 
 }
 
 // Remove the hooks, clean up
-int hookUninit()
+int kaptivateHookUninit()
 {
     if(!_initialized)
         return 0;
@@ -195,7 +202,7 @@ int hookUninit()
 }
 
 // Pause all processing of hooks
-int hookPause()
+int kaptivateHookPause()
 {
     if(_initialized)
     {
@@ -207,7 +214,7 @@ int hookPause()
 }
 
 // Resume all processing of hooks
-int hookUnpause()
+int kaptivateHookUnpause()
 {
     if(_initialized)
     {

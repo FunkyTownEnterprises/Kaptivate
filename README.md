@@ -22,6 +22,8 @@ Due to the Win32 API calls, there is no guarantee that this library will receive
 
 This library deals in <em>raw key events</em>, NOT digested character messages. At best you will need to translate a virtual keycode to a character. If more complicated modifiers are involved (i.e. shift, ctrl, etc) more advanced trickery will be required. At some point this library may add this functionality, but for now it isn't planned.
 
+Finally, and most importantly, this library runs its own thread for processing events. Which means that yes, my dear user, you get to be responsible for thread safety. Luckily there is only one additional thread to worry about, but your code must be thread safe. Any handlers you register will execute within Kaptivate's event thread. One side effect of having only one thread is that the speed of processing is entirely dependant upon the handlers. If the user notices any perceivable input lag, odds are it's your handler.
+
 References
 -------------------------
 

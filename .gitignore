@@ -1,5 +1,4 @@
-
 *.ncb
 *.suo
-/Debug
-/Kaptivate/Debug
+Debug
+Kaptivate/Debug

@@ -49,6 +49,7 @@ KaptivateAPI::KaptivateAPI()
 {
     running   = false;
     suspended = false;
+    msgLoopThread = 0;
 }
 
 KaptivateAPI::~KaptivateAPI()
@@ -91,24 +92,59 @@ void KaptivateAPI::destroyInstance()
 ////////////////////////////////////////////////////////////////////////////////
 // Main event loop (seperate thread)
 
-
+static DWORD WINAPI MessageLoop(LPVOID iValue)
+{
+    return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Start / Stop
 
-void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSuspended)
+void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSuspended, UINT msgTimeoutMs)
 {
     if(!wantMouse && !wantKeyboard)
         throw KaptivateException("He who wants nothing has everything");
     if(running)
         throw KaptivateException("Kaptivate is already running");
 
+    // Find out what our messaging is going to look like
+    UINT keyboardMessage = 0, mouseMessage = 0;
+    if(wantMouse)
+        mouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
+    if(wantKeyboard)
+        keyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
+
+    // TODO: Set up the win32 window here
+    HWND callbackWindow = 0;
+
+    DWORD threadId = 0;
+    if(NULL == (msgLoopThread = CreateThread(NULL, 0, MessageLoop, NULL, 0, &threadId)))
+        throw KaptivateException("Failed to create the main thread loop");
+
+    // TODO: Ping the window until it comes up
+
+    // Finally set up the hooks
+    if(0 != kaptivateHookInit(callbackWindow, keyboardMessage, mouseMessage, msgTimeoutMs, 0))
+        throw KaptivateException("Failed to initialize the hooks");
+
+
+    running = true;
 }
 
 void KaptivateAPI::stopCapture()
 {
     if(!running)
         throw KaptivateException("Kaptivate is not running");
+
+    if(0 != kaptivateHookUninit())
+        throw KaptivateException("Failed to uninitialize the hooks");
+
+    // TODO: Send some kind of "stop" message to the main event loop
+
+    // Wait for it to return
+    WaitForSingleObject(msgLoopThread, INFINITE);
+
+    running = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,10 +152,16 @@ void KaptivateAPI::stopCapture()
 
 void KaptivateAPI::suspendCapture()
 {
+    if(0 != kaptivateHookPause())
+        throw KaptivateException("Please call startCapture first");
+    suspended = true;
 }
 
 void KaptivateAPI::resumeCapture()
 {
+    if(0 != kaptivateHookUnpause())
+        throw KaptivateException("Please call startCapture first");
+    suspended = false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +169,7 @@ void KaptivateAPI::resumeCapture()
 
 bool KaptivateAPI::isRunning() const
 {
+    // TODO: Ping the window
     return running;
 }
 

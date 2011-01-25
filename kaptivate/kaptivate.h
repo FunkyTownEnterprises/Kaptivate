@@ -107,6 +107,9 @@ namespace Kaptivate
         bool running;
         bool suspended;
 
+        // Stuff for the main message loop thread
+        HANDLE msgLoopThread;
+
     public:
 
         // Public singleton methods
@@ -118,7 +121,7 @@ namespace Kaptivate
         // Kaptivate API methods
 
         // Start / stop
-        void startCapture(bool wantMouse = true, bool wantKeyboard = true, bool startSuspended = false);
+        void startCapture(bool wantMouse = true, bool wantKeyboard = true, bool startSuspended = false, UINT msgTimeoutMs = 5000);
         void stopCapture();
 
         // Suspend / resume

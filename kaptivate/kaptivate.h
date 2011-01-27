@@ -109,6 +109,7 @@ namespace Kaptivate
 
         // Stuff for the main message loop thread
         HANDLE msgLoopThread;
+        HWND callbackWindow;
 
     public:
 

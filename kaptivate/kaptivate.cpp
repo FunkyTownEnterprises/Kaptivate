@@ -90,10 +90,54 @@ void KaptivateAPI::destroyInstance()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Event processing
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Main event loop (seperate thread)
 
+extern HMODULE kaptivateDllModule;
 static DWORD WINAPI MessageLoop(LPVOID iValue)
 {
+    // Register a window class
+    {
+        WNDCLASS wc;
+        wc.style = 0;
+        wc.lpfnWndProc = (WNDPROC)WndProc;
+        wc.cbClsExtra = 0;
+        wc.cbWndExtra = 0;
+        wc.hInstance = (HINSTANCE)kaptivateDllModule;
+        wc.hIcon = 0;
+        wc.hCursor = 0;
+        wc.hbrBackground = 0;
+        wc.lpszMenuName = 0;
+        wc.lpszClassName = L"KaptivateWndClass";
+        if (!RegisterClass(&wc))
+            return -1;
+    }
+
+    // Set up the win32 message-only window which recieves messages
+    {
+        HWND callbackWindow = NULL;
+        if(NULL == (callbackWindow = CreateWindowEx(0, 0, L"KaptivateWndClass", 0, 0,
+            0, 0, 0, HWND_MESSAGE, NULL, (HINSTANCE)kaptivateDllModule, (LPVOID)NULL)))
+            return -1;
+
+        HWND* tmp = (HWND*)iValue;
+        *tmp = callbackWindow;
+    }
+
+    MSG msg;
+    while (GetMessage (&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage (&msg);
+    }
+
     return 0;
 }
 
@@ -113,9 +157,6 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         mouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
     if(wantKeyboard)
         keyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
-
-    // TODO: Set up the win32 window here
-    HWND callbackWindow = 0;
 
     DWORD threadId = 0;
     if(NULL == (msgLoopThread = CreateThread(NULL, 0, MessageLoop, NULL, 0, &threadId)))

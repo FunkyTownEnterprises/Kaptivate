@@ -111,6 +111,9 @@ namespace Kaptivate
         HANDLE msgLoopThread;
         HWND callbackWindow;
 
+        // Internal utility methods
+        bool tryStopMsgLoop();
+
     public:
 
         // Public singleton methods

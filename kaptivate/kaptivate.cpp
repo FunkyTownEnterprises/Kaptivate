@@ -38,6 +38,18 @@
 using namespace std;
 using namespace Kaptivate;
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Data passed from startCapture to the main event loop
+
+typedef struct _kapMsgLoopParams
+{
+    HWND callbackWindow;
+    HANDLE msgEvent;
+    bool success;
+} kapMsgLoopParams;
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Creation / destruction
 
@@ -89,13 +101,17 @@ void KaptivateAPI::destroyInstance()
     instanceFlag = false;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Event processing
+
+static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return 0;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main event loop (seperate thread)
@@ -103,8 +119,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 extern HMODULE kaptivateDllModule;
 static DWORD WINAPI MessageLoop(LPVOID iValue)
 {
-    // Register a window class
     {
+        kapMsgLoopParams* params = (kapMsgLoopParams*)iValue;
+        params->success = false;
+
+        // Register a window class
+
         WNDCLASS wc;
         wc.style = 0;
         wc.lpfnWndProc = (WNDPROC)WndProc;
@@ -116,23 +136,29 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
         wc.hbrBackground = 0;
         wc.lpszMenuName = 0;
         wc.lpszClassName = L"KaptivateWndClass";
+
         if (!RegisterClass(&wc))
+        {
+            SetEvent(params->msgEvent);
             return -1;
-    }
+        }
 
-    // Set up the win32 message-only window which recieves messages
-    {
-        HWND callbackWindow = NULL;
-        if(NULL == (callbackWindow = CreateWindowEx(0, 0, L"KaptivateWndClass", 0, 0,
+        // Set up the win32 message-only window which recieves messages
+        if(NULL == (params->callbackWindow = CreateWindowEx(0, 0, L"KaptivateWndClass", 0, 0,
             0, 0, 0, HWND_MESSAGE, NULL, (HINSTANCE)kaptivateDllModule, (LPVOID)NULL)))
+        {
+            SetEvent(params->msgEvent);
             return -1;
+        }
 
-        HWND* tmp = (HWND*)iValue;
-        *tmp = callbackWindow;
+        // Signal the main thread that we're ready
+        params->success = true;
+        SetEvent(params->msgEvent);
     }
 
+    // Finally we get to the main event loop
     MSG msg;
-    while (GetMessage (&msg, NULL, 0, 0))
+    while (0 != GetMessage (&msg, NULL, 0, 0))
     {
         TranslateMessage(&msg);
         DispatchMessage (&msg);
@@ -140,6 +166,7 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
 
     return 0;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Start / Stop
@@ -152,22 +179,45 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         throw KaptivateException("Kaptivate is already running");
 
     // Find out what our messaging is going to look like
-    UINT keyboardMessage = 0, mouseMessage = 0;
+    kaptivateMouseMessage = 0;
+    kaptivateKeyboardMessage = 0;
     if(wantMouse)
-        mouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
+        kaptivateMouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
     if(wantKeyboard)
-        keyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
+        kaptivateKeyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
 
+    // Set up the data we're going to pass in
+    kapMsgLoopParams params;
+    params.callbackWindow = 0;
+    params.msgEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    params.success = false;
+
+    // Spin up the thread
     DWORD threadId = 0;
-    if(NULL == (msgLoopThread = CreateThread(NULL, 0, MessageLoop, NULL, 0, &threadId)))
+    if(NULL == (this->msgLoopThread = CreateThread(NULL, 0, MessageLoop, &params, 0, &threadId)))
         throw KaptivateException("Failed to create the main thread loop");
 
-    // TODO: Ping the window until it comes up
+    // Wait for the thread to decide whether or not everything is good
+    WaitForSingleObject(params.msgEvent, INFINITE);
+    CloseHandle (params.msgEvent);
+    if(!params.success)
+        throw KaptivateException("Failed to initialize the message window");
 
     // Finally set up the hooks
-    if(0 != kaptivateHookInit(callbackWindow, keyboardMessage, mouseMessage, msgTimeoutMs, 0))
-        throw KaptivateException("Failed to initialize the hooks");
-
+    try
+    {
+        this->callbackWindow = params.callbackWindow;
+        short ss = (startSuspended) ? 1 : 0;
+        if(0 != kaptivateHookInit(this->callbackWindow, kaptivateKeyboardMessage,
+                                  kaptivateMouseMessage, msgTimeoutMs, ss))
+            throw KaptivateException("Failed to initialize the hooks");
+    }
+    catch(...)
+    {
+        // TODO: Stop the main thread
+        tryStopMsgLoop();
+        throw;
+    }
 
     running = true;
 }
@@ -177,16 +227,31 @@ void KaptivateAPI::stopCapture()
     if(!running)
         throw KaptivateException("Kaptivate is not running");
 
+    // First stop any further messages from being generated
     if(0 != kaptivateHookUninit())
         throw KaptivateException("Failed to uninitialize the hooks");
 
-    // TODO: Send some kind of "stop" message to the main event loop
-
-    // Wait for it to return
-    WaitForSingleObject(msgLoopThread, INFINITE);
+    // Attempt to shut down the message window
+    if(!tryStopMsgLoop())
+        throw KaptivateException("Failed to stop the main Kaptivate message loop");
 
     running = false;
 }
+
+bool KaptivateAPI::tryStopMsgLoop()
+{
+    // Tell the window we're done
+    DWORD res = 0;
+    if(0 == SendMessageTimeout(this->callbackWindow, WM_QUIT, 0, 0, SMTO_ABORTIFHUNG, 5000, &res))
+        return false;
+
+    // Wait for the thread to return
+    // TODO: Time out
+    WaitForSingleObject(msgLoopThread, INFINITE);
+
+    return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Suspend / Resume
@@ -205,6 +270,7 @@ void KaptivateAPI::resumeCapture()
     suspended = false;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Status
 
@@ -218,6 +284,7 @@ bool KaptivateAPI::isSuspended() const
 {
     return suspended;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Device enumeration
@@ -233,6 +300,7 @@ vector<MouseInfo> KaptivateAPI::enumerateMice()
     vector<MouseInfo> dummy;
     return dummy;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Event handler registration / unregistration

@@ -66,6 +66,8 @@ KaptivateAPI::KaptivateAPI()
 
 KaptivateAPI::~KaptivateAPI()
 {
+    if(isRunning())
+        stopCapture();
 }
 
 // Get an instance of this thing

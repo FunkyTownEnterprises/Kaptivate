@@ -3,6 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Kaptivate", "kaptivate\kaptivate.vcproj", "{F8843170-DEE4-49AE-B5B6-F50584E725F8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleApp", "sample_app\sample_app.vcproj", "{01C136DE-6F68-4499-9963-AF2EB1D3F913}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F8843170-DEE4-49AE-B5B6-F50584E725F8} = {F8843170-DEE4-49AE-B5B6-F50584E725F8}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +18,10 @@ Global
 		{F8843170-DEE4-49AE-B5B6-F50584E725F8}.Debug|Win32.Build.0 = Debug|Win32
 		{F8843170-DEE4-49AE-B5B6-F50584E725F8}.Release|Win32.ActiveCfg = Release|Win32
 		{F8843170-DEE4-49AE-B5B6-F50584E725F8}.Release|Win32.Build.0 = Release|Win32
+		{01C136DE-6F68-4499-9963-AF2EB1D3F913}.Debug|Win32.ActiveCfg = Debug|Win32
+		{01C136DE-6F68-4499-9963-AF2EB1D3F913}.Debug|Win32.Build.0 = Debug|Win32
+		{01C136DE-6F68-4499-9963-AF2EB1D3F913}.Release|Win32.ActiveCfg = Release|Win32
+		{01C136DE-6F68-4499-9963-AF2EB1D3F913}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

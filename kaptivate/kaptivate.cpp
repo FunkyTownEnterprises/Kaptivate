@@ -216,7 +216,6 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
     }
     catch(...)
     {
-        // TODO: Stop the main thread
         tryStopMsgLoop();
         throw;
     }

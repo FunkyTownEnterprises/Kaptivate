@@ -5,6 +5,7 @@
 #include "sample_app.h"
 
 #include "kaptivate.h"
+#include "kaptivate_exceptions.h"
 
 #define MAX_LOADSTRING 100
 
@@ -154,9 +155,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			break;
         case IDM_CAPTURE_START:
-            Kaptivate::KaptivateAPI::getInstance()->startCapture(false, true);
+
+            try
+            {
+                Kaptivate::KaptivateAPI::getInstance()->startCapture(false, true);
+            }
+            catch(Kaptivate::KaptivateException& e)
+            {
+                wchar_t msg[4096];
+                swprintf_s(msg, 4096, L"Exception: %S", e.what());
+                MessageBoxEx(hWnd, msg, L"Error", MB_ICONWARNING | IDOK, 0);
+            }
+
             break;
         case IDM_CAPTURE_STOP:
+
+            try
+            {
+                Kaptivate::KaptivateAPI::getInstance()->stopCapture();
+            }
+            catch(Kaptivate::KaptivateException& e)
+            {
+                wchar_t msg[4096];
+                swprintf_s(msg, 4096, L"Exception: %S", e.what());
+                MessageBoxEx(hWnd, msg, L"Error", MB_ICONWARNING | IDOK, 0);
+            }
+
             break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);

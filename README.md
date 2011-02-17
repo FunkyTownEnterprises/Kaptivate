@@ -37,5 +37,5 @@ Requirements
 *  Visual Studio 2008 or higher
 
 
-[1]: http://http://www.hidmacros.eu/   "HID macros"
+[1]: http://www.hidmacros.eu/   "HID macros"
 [2]: http://www.securics.com/          "Securics, Inc."

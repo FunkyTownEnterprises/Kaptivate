@@ -111,7 +111,16 @@ static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    return 0;
+    if(kaptivateKeyboardMessage == message)
+    {
+        // Handle the keyboard message here
+    }
+    else if(kaptivateMouseMessage == message)
+    {
+        // Handle the mouse message here
+    }
+
+    return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 
@@ -127,27 +136,30 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
 
         // Register a window class
 
-        WNDCLASS wc;
-        wc.style = 0;
-        wc.lpfnWndProc = (WNDPROC)WndProc;
-        wc.cbClsExtra = 0;
-        wc.cbWndExtra = 0;
-        wc.hInstance = (HINSTANCE)kaptivateDllModule;
-        wc.hIcon = 0;
-        wc.hCursor = 0;
-        wc.hbrBackground = 0;
-        wc.lpszMenuName = 0;
-        wc.lpszClassName = L"KaptivateWndClass";
+        WNDCLASSEX wce;
 
-        if (!RegisterClass(&wc))
+        wce.cbSize = sizeof(WNDCLASSEX);
+        wce.style = CS_HREDRAW | CS_VREDRAW;
+        wce.lpfnWndProc = (WNDPROC)WndProc;
+        wce.cbClsExtra = 0;
+        wce.cbWndExtra = 0;
+        wce.hInstance = (HINSTANCE)kaptivateDllModule;
+        wce.hIcon = NULL;
+        wce.hIconSm = NULL;
+        wce.hCursor = NULL;
+        wce.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+        wce.lpszMenuName = NULL;
+        wce.lpszClassName = L"KaptivateMsgWnd";
+
+        if (!RegisterClassEx(&wce))
         {
             SetEvent(params->msgEvent);
             return -1;
         }
 
         // Set up the win32 message-only window which recieves messages
-        if(NULL == (params->callbackWindow = CreateWindowEx(0, 0, L"KaptivateWndClass", 0, 0,
-            0, 0, 0, HWND_MESSAGE, NULL, (HINSTANCE)kaptivateDllModule, (LPVOID)NULL)))
+        if(NULL == (params->callbackWindow = CreateWindowEx(NULL, L"KaptivateMsgWnd", NULL, NULL, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,
+            HWND_MESSAGE, NULL, (HINSTANCE)kaptivateDllModule, NULL)))
         {
             SetEvent(params->msgEvent);
             return -1;
@@ -164,6 +176,11 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
     {
         TranslateMessage(&msg);
         DispatchMessage (&msg);
+    }
+
+    {
+        kapMsgLoopParams* params = (kapMsgLoopParams*)iValue;
+        DestroyWindow(params->callbackWindow);
     }
 
     return 0;

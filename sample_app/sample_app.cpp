@@ -159,6 +159,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             try
             {
                 Kaptivate::KaptivateAPI::getInstance()->startCapture(false, true);
+                MessageBoxEx(hWnd, L"Successfully started Kaptivate", L"Started", IDOK, 0);
             }
             catch(Kaptivate::KaptivateException& e)
             {
@@ -173,6 +174,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             try
             {
                 Kaptivate::KaptivateAPI::getInstance()->stopCapture();
+                MessageBoxEx(hWnd, L"Successfully stopped Kaptivate", L"Stopped", IDOK, 0);
             }
             catch(Kaptivate::KaptivateException& e)
             {

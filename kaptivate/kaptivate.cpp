@@ -1,5 +1,5 @@
 /*
- * Kaptivate.cpp
+ * kaptivate.cpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -27,6 +27,17 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Quick overview:
+ * - Raw input API - tells us which device sent us a keyboard / mouse event
+ * - Keyboard hook API - lets us decide whether or not other apps see a key / mouse event
+ * - Goal - decide which events we want to let through while KNOWING where they came from
+ * 
+ * Problems to overcome:
+ *    1. Neither API can be easily used with the other
+ *    2. There is NO GUARANTEED ORDER for which API will generate an event first
  */
 
 #include "stdafx.h"

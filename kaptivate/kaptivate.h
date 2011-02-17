@@ -1,5 +1,5 @@
 /*
- * Kaptivate.h
+ * kaptivate.h
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#pragma once
 
 #ifdef KAPTIVATE_EXPORTS
 #define KAPTIVATE_API __declspec(dllexport)

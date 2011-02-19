@@ -31,6 +31,31 @@
 
 #pragma once
 
+#include <iostream>
+
 namespace Kaptivate
 {
+    class KeyboardEvent;
+    class MouseButtonEvent;
+    class MouseWheelEvent;
+    class MouseMoveEvent;
+    class KeyboardHandler;
+    class MouseHandler;
+
+    class DeviceHandlerMap
+    {
+    public:
+        DeviceHandlerMap();
+        ~DeviceHandlerMap();
+
+        void handleKeyboard(HANDLE deviceID, KeyboardEvent& evt);
+        void handleMouseButton(HANDLE deviceID, MouseButtonEvent& evt);
+        void handleMouseWheel(HANDLE deviceID, MouseWheelEvent& evt);
+        void handleMouseMove(HANDLE deviceID, MouseMoveEvent& evt);
+
+        void registerKeyboardHandler(std::string idRegex, KeyboardHandler* handler);
+        void resgisterMouseHandler(std::string idRegex, MouseHandler* handler);
+        void unregisterKeyboardHandler(KeyboardHandler* handler);
+        void unregisterMouseHandler(MouseHandler* handler);
+    };
 }

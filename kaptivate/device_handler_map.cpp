@@ -35,3 +35,43 @@
 #include <iostream>
 using namespace std;
 using namespace Kaptivate;
+
+DeviceHandlerMap::DeviceHandlerMap()
+{
+}
+
+DeviceHandlerMap::~DeviceHandlerMap()
+{
+}
+
+void DeviceHandlerMap::handleKeyboard(HANDLE deviceID, KeyboardEvent& evt)
+{
+}
+
+void DeviceHandlerMap::handleMouseButton(HANDLE deviceID, MouseButtonEvent& evt)
+{
+}
+
+void DeviceHandlerMap::handleMouseWheel(HANDLE deviceID, MouseWheelEvent& evt)
+{
+}
+
+void DeviceHandlerMap::handleMouseMove(HANDLE deviceID, MouseMoveEvent& evt)
+{
+}
+
+void DeviceHandlerMap::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)
+{
+}
+
+void DeviceHandlerMap::resgisterMouseHandler(string idRegex, MouseHandler* handler)
+{
+}
+
+void DeviceHandlerMap::unregisterKeyboardHandler(KeyboardHandler* handler)
+{
+}
+
+void DeviceHandlerMap::unregisterMouseHandler(MouseHandler* handler)
+{
+}

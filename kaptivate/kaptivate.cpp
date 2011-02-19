@@ -44,6 +44,7 @@
 #include "kaptivate.h"
 #include "kaptivate_exceptions.h"
 #include "hooks.h"
+#include "device_handler_map.h"
 
 #include <iostream>
 using namespace std;
@@ -73,12 +74,15 @@ KaptivateAPI::KaptivateAPI()
     running   = false;
     suspended = false;
     msgLoopThread = 0;
+    kaptivateHandler = new DeviceHandlerMap();
 }
 
 KaptivateAPI::~KaptivateAPI()
 {
     if(isRunning())
         stopCapture();
+    delete kaptivateHandler;
+    kaptivateHandler = NULL;
 }
 
 // Get an instance of this thing
@@ -336,16 +340,20 @@ vector<MouseInfo> KaptivateAPI::enumerateMice()
 
 void KaptivateAPI::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)
 {
+    kaptivateHandler->registerKeyboardHandler(idRegex, handler);
 }
 
 void KaptivateAPI::resgisterMouseHandler(string idRegex, MouseHandler* handler)
 {
+    kaptivateHandler->resgisterMouseHandler(idRegex, handler);
 }
 
 void KaptivateAPI::unregisterKeyboardHandler(KeyboardHandler* handler)
 {
+    kaptivateHandler->unregisterKeyboardHandler(handler);
 }
 
 void KaptivateAPI::unregisterMouseHandler(MouseHandler* handler)
 {
+    kaptivateHandler->unregisterMouseHandler(handler);
 }

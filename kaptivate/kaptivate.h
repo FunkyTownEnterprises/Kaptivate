@@ -43,6 +43,15 @@
 
 namespace Kaptivate
 {
+    class DeviceHandlerMap;
+
+    enum Decision
+    {
+        PERMIT = 0,
+        CONSUME = 1,
+        PASS = 2
+    };
+
     struct KeyboardInfo
     {
         std::string id;
@@ -108,6 +117,9 @@ namespace Kaptivate
         // Status
         bool running;
         bool suspended;
+
+        // Device handler stuff
+        DeviceHandlerMap* kaptivateHandler;
 
         // Stuff for the main message loop thread
         HANDLE msgLoopThread;

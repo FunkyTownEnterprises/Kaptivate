@@ -127,6 +127,7 @@ namespace Kaptivate
 
         // Internal utility methods
         bool tryStopMsgLoop();
+        bool pingMessageWindow() const;
 
     public:
 

@@ -122,17 +122,26 @@ void KaptivateAPI::destroyInstance()
 ////////////////////////////////////////////////////////////////////////////////
 // Event processing
 
-static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0;
+static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0, kaptivatePingMessage = 0;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if(kaptivateKeyboardMessage == message)
+    if(WM_INPUT == message)
     {
-        // Handle the keyboard message here
+        // Process the raw input here
     }
     else if(kaptivateMouseMessage == message)
     {
         // Handle the mouse message here
+    }
+    else if(kaptivateKeyboardMessage == message)
+    {
+        // Handle the keyboard message here
+    }
+    else if(kaptivatePingMessage == message)
+    {
+        // Pong
+        return 1;
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
@@ -219,6 +228,7 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         kaptivateMouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
     if(wantKeyboard)
         kaptivateKeyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
+    kaptivatePingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C");
 
     // Set up the data we're going to pass in
     kapMsgLoopParams params;
@@ -234,8 +244,11 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
     // Wait for the thread to decide whether or not everything is good
     WaitForSingleObject(params.msgEvent, INFINITE);
     CloseHandle (params.msgEvent);
+
     if(!params.success)
         throw KaptivateException("Failed to initialize the message window");
+    if(!pingMessageWindow())
+        throw KaptivateException("Something horrible has happened");
 
     // Finally set up the hooks
     try
@@ -285,6 +298,28 @@ bool KaptivateAPI::tryStopMsgLoop()
     return true;
 }
 
+bool KaptivateAPI::pingMessageWindow() const
+{
+    LRESULT res;
+    DWORD dwres = 0;
+
+    while(true)
+    {
+        res = SendMessageTimeout(this->callbackWindow, kaptivatePingMessage, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwres);
+        if(0 == res)
+        {
+            if(ERROR_TIMEOUT == GetLastError())
+                return false;
+        }
+        else if(1 == res)
+        {
+            return true;
+        }
+    }
+
+    return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Suspend / Resume
@@ -309,8 +344,11 @@ void KaptivateAPI::resumeCapture()
 
 bool KaptivateAPI::isRunning() const
 {
-    // TODO: Ping the window
-    return running;
+    if(!running)
+        return false;
+    if(!pingMessageWindow())
+        return false;
+    return true;
 }
 
 bool KaptivateAPI::isSuspended() const
@@ -324,14 +362,12 @@ bool KaptivateAPI::isSuspended() const
 
 vector<KeyboardInfo> KaptivateAPI::enumerateKeyboards()
 {
-    vector<KeyboardInfo> dummy;
-    return dummy;
+    return kaptivateHandler->enumerateKeyboards();
 }
 
 vector<MouseInfo> KaptivateAPI::enumerateMice()
 {
-    vector<MouseInfo> dummy;
-    return dummy;
+    return kaptivateHandler->enumerateMice();
 }
 
 

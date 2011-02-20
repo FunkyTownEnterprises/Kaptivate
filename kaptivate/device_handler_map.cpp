@@ -31,6 +31,7 @@
 
 #include "stdafx.h"
 #include "device_handler_map.h"
+#include "kaptivate.h"
 
 #include <iostream>
 using namespace std;
@@ -58,6 +59,18 @@ void DeviceHandlerMap::handleMouseWheel(HANDLE deviceID, MouseWheelEvent& evt)
 
 void DeviceHandlerMap::handleMouseMove(HANDLE deviceID, MouseMoveEvent& evt)
 {
+}
+
+vector<KeyboardInfo> DeviceHandlerMap::enumerateKeyboards()
+{
+    vector<KeyboardInfo> dummy;
+    return dummy;
+}
+
+vector<MouseInfo> DeviceHandlerMap::enumerateMice()
+{
+    vector<MouseInfo> dummy;
+    return dummy;
 }
 
 void DeviceHandlerMap::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)

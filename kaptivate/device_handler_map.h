@@ -31,6 +31,7 @@
 
 #pragma once
 
+#include <vector>
 #include <iostream>
 
 namespace Kaptivate
@@ -41,9 +42,14 @@ namespace Kaptivate
     class MouseMoveEvent;
     class KeyboardHandler;
     class MouseHandler;
+    struct KeyboardInfo;
+    struct MouseInfo;
 
     class DeviceHandlerMap
     {
+    private:
+        void scanDevices();
+
     public:
         DeviceHandlerMap();
         ~DeviceHandlerMap();
@@ -52,6 +58,9 @@ namespace Kaptivate
         void handleMouseButton(HANDLE deviceID, MouseButtonEvent& evt);
         void handleMouseWheel(HANDLE deviceID, MouseWheelEvent& evt);
         void handleMouseMove(HANDLE deviceID, MouseMoveEvent& evt);
+
+        std::vector<KeyboardInfo> enumerateKeyboards();
+        std::vector<MouseInfo> enumerateMice();
 
         void registerKeyboardHandler(std::string idRegex, KeyboardHandler* handler);
         void resgisterMouseHandler(std::string idRegex, MouseHandler* handler);

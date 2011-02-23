@@ -45,6 +45,7 @@ namespace Kaptivate
 {
     class DeviceHandlerMap;
 
+    // What should be done with a particular event?
     enum Decision
     {
         PERMIT = 0,
@@ -52,11 +53,13 @@ namespace Kaptivate
         PASS = 2
     };
 
+    // Information about a particular keyboard
     struct KeyboardInfo
     {
         std::string id;
     };
 
+    // Describes a keyboard event
     class KAPTIVATE_API KeyboardEvent
     {
     public:
@@ -64,17 +67,20 @@ namespace Kaptivate
         ~KeyboardEvent();
     };
 
+    // An interface for a keyboard event handler
     class KAPTIVATE_API KeyboardHandler
     {
     public:
         virtual void HandleKeyEvent(KeyboardEvent& evt) = 0;
     };
 
+    // Information about a particular mouse
     struct MouseInfo
     {
         std::string id;
     };
 
+    // Describes a mouse button event
     class KAPTIVATE_API MouseButtonEvent
     {
     public:
@@ -82,6 +88,7 @@ namespace Kaptivate
         ~MouseButtonEvent();
     };
 
+    // Describes a mouse wheel event
     class KAPTIVATE_API MouseWheelEvent
     {
     public:
@@ -89,6 +96,7 @@ namespace Kaptivate
         ~MouseWheelEvent();
     };
 
+    // Describes a mouse move event
     class KAPTIVATE_API MouseMoveEvent
     {
     public:
@@ -96,6 +104,7 @@ namespace Kaptivate
         ~MouseMoveEvent();
     };
 
+    // An interface for a mouse event handler
     class KAPTIVATE_API MouseHandler
     {
     public:
@@ -125,9 +134,15 @@ namespace Kaptivate
         HANDLE msgLoopThread;
         HWND callbackWindow;
 
+        // To keep track of what type of devices we want from the raw API
+        bool rawKeyboardRunning;
+        bool rawMouseRunning;
+
         // Internal utility methods
         bool tryStopMsgLoop();
         bool pingMessageWindow() const;
+        bool startRawCapture(bool wantMouse, bool wantKeyboard);
+        bool stopRawCapture();
 
     public:
 

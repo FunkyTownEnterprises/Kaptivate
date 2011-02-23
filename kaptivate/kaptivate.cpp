@@ -73,6 +73,8 @@ KaptivateAPI::KaptivateAPI()
 {
     running   = false;
     suspended = false;
+    rawKeyboardRunning = false;
+    rawMouseRunning = false;
     msgLoopThread = 0;
     kaptivateHandler = new DeviceHandlerMap();
 }
@@ -228,7 +230,9 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         kaptivateMouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
     if(wantKeyboard)
         kaptivateKeyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
-    kaptivatePingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C");
+
+    kaptivatePingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
+                                                                                           // random, but special... to me.
 
     // Set up the data we're going to pass in
     kapMsgLoopParams params;
@@ -253,6 +257,12 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
     // Finally set up the hooks
     try
     {
+        if(!startSuspended)
+        {
+            if(!startRawCapture(wantMouse, wantKeyboard))
+                throw KaptivateException("Failed to start raw capture");
+        }
+
         this->callbackWindow = params.callbackWindow;
         short ss = (startSuspended) ? 1 : 0;
         if(0 != kaptivateHookInit(this->callbackWindow, kaptivateKeyboardMessage,
@@ -261,6 +271,7 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
     }
     catch(...)
     {
+        stopRawCapture();
         tryStopMsgLoop();
         throw;
     }
@@ -294,6 +305,103 @@ bool KaptivateAPI::tryStopMsgLoop()
     // Wait for the thread to return
     // TODO: Time out
     WaitForSingleObject(msgLoopThread, INFINITE);
+
+    return true;
+}
+
+bool KaptivateAPI::startRawCapture(bool wantMouse, bool wantKeyboard)
+{
+    if(rawKeyboardRunning || rawMouseRunning)
+        throw KaptivateException("The raw capture events are still running");
+
+    unsigned int ct = 0;
+    if(wantKeyboard) ++ct;
+    if(wantMouse) ++ct;
+
+    // Should never happen
+    if(ct == 0)
+        return false;
+
+    RAWINPUTDEVICE* rid = new RAWINPUTDEVICE[ct];
+    ct = 0;
+
+    // Register for keyboard events in the background
+    if(wantKeyboard)
+    {
+        rid[ct].usUsagePage = 0x01; // It's a keyboard
+        rid[ct].usUsage = 0x06;
+        rid[ct].dwFlags = RIDEV_INPUTSINK | RIDEV_NOLEGACY | RIDEV_NOHOTKEYS;
+        rid[ct].hwndTarget = this->callbackWindow;
+        ++ct;
+    }
+
+    // Register for mouse events in the background
+    if(wantMouse)
+    {
+        rid[ct].usUsagePage = 0x01; // It's a mouse
+        rid[ct].usUsage = 0x02;
+        rid[ct].dwFlags = RIDEV_INPUTSINK | RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE;
+        rid[ct].hwndTarget = this->callbackWindow;
+        ++ct;
+    }
+
+    BOOL ret = RegisterRawInputDevices(rid, ct, sizeof(RAWINPUTDEVICE));
+    delete[] rid;
+
+    if(!ret)
+        return false;
+
+    rawKeyboardRunning = wantKeyboard;
+    rawMouseRunning = wantMouse;
+
+    return true;
+}
+
+bool KaptivateAPI::stopRawCapture()
+{
+    if(!rawKeyboardRunning && !rawMouseRunning)
+        return true;
+
+    unsigned int ct = 0;
+    if(rawKeyboardRunning) ++ct;
+    if(rawMouseRunning) ++ct;
+
+    // Should never happen
+    if(ct == 0)
+        return false;
+
+    RAWINPUTDEVICE* rid = new RAWINPUTDEVICE[ct];
+    ct = 0;
+
+    // Register for keyboard events in the background
+    if(rawKeyboardRunning)
+    {
+        rid[ct].usUsagePage = 0x01;
+        rid[ct].usUsage = 0x06; // It's a keyboard
+        rid[ct].dwFlags = RIDEV_REMOVE;
+        rid[ct].hwndTarget = 0x0;
+        ++ct;
+    }
+
+    // Register for mouse events in the background
+    if(rawMouseRunning)
+    {
+        rid[ct].usUsagePage = 0x01;
+        rid[ct].usUsage = 0x02; // It's a mouse
+        rid[ct].dwFlags = RIDEV_REMOVE;
+        rid[ct].hwndTarget = 0x0;
+        ++ct;
+    }
+
+    // Actually we're unregistering them.
+    BOOL ret = RegisterRawInputDevices(rid, ct, sizeof(RAWINPUTDEVICE));
+    delete[] rid;
+
+    if(!ret)
+        return false;
+
+    rawKeyboardRunning = false;
+    rawMouseRunning = false;
 
     return true;
 }

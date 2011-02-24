@@ -50,6 +50,13 @@
 using namespace std;
 using namespace Kaptivate;
 
+////////////////////////////////////////////////////////////////////////////////
+// Static and extern data
+
+extern HMODULE kaptivateDllModule;
+static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0, kaptivatePingMessage = 0;
+static bool kaptivateSuspendProcessing = false;
+static DeviceHandlerMap* kaptivateHandler = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data passed from startCapture to the main event loop
@@ -69,6 +76,7 @@ typedef struct _kapMsgLoopParams
 bool KaptivateAPI::instanceFlag       = false;
 KaptivateAPI* KaptivateAPI::singleton = NULL;
 
+// Constructor
 KaptivateAPI::KaptivateAPI()
 {
     running   = false;
@@ -80,6 +88,7 @@ KaptivateAPI::KaptivateAPI()
     kaptivateHandler = new DeviceHandlerMap();
 }
 
+// Destructor
 KaptivateAPI::~KaptivateAPI()
 {
     if(isRunning())
@@ -125,22 +134,19 @@ void KaptivateAPI::destroyInstance()
 ////////////////////////////////////////////////////////////////////////////////
 // Event processing
 
-static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0, kaptivatePingMessage = 0;
-static bool _suspendProcessing = false;
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if(WM_INPUT == message)
     {
-        if(_suspendProcessing)
+        if(kaptivateSuspendProcessing)
             return 0;
 
         // TODO: Process the raw input here
-        //return 0;
+        return 0;
     }
     else if(kaptivateMouseMessage == message)
     {
-        if(_suspendProcessing)
+        if(kaptivateSuspendProcessing)
             return 0;
 
         // TODO: Handle the mouse message here
@@ -148,11 +154,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     else if(kaptivateKeyboardMessage == message)
     {
-        if(_suspendProcessing)
+        if(kaptivateSuspendProcessing)
             return 0;
 
         // TODO: Handle the keyboard message here
-        //return 0;
+        //kaptivateHandler->handleKeyboard(...);
+        //if(evt.action == CONSUME)
+        //    return 1; // > 0 means consume
+        //else
+        //    return 0; // 0 means pass
     }
     else if(kaptivatePingMessage == message)
     {
@@ -167,7 +177,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 ////////////////////////////////////////////////////////////////////////////////
 // Main event loop (seperate thread)
 
-extern HMODULE kaptivateDllModule;
 static DWORD WINAPI MessageLoop(LPVOID iValue)
 {
     {
@@ -248,7 +257,7 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
 
     kaptivatePingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
                                                                                            // random, but special... to me.
-    _suspendProcessing = startSuspended;
+    kaptivateSuspendProcessing = startSuspended;
 
     // Set up the data we're going to pass in
     kapMsgLoopParams params;
@@ -459,11 +468,11 @@ void KaptivateAPI::suspendCapture()
 {
     if(!running)
         throw KaptivateException("Kaptivate is not currently running");
-    if(_suspendProcessing)
+    if(kaptivateSuspendProcessing)
         throw KaptivateException("Kaptivate is already suspended");
     if(0 != kaptivateHookPause())
         throw KaptivateException("Unable to suspend hook processing");
-    _suspendProcessing = true;
+    kaptivateSuspendProcessing = true;
 }
 
 // Assume that our hooks are alive, and resume capturing events
@@ -471,9 +480,9 @@ void KaptivateAPI::resumeCapture()
 {
     if(!running)
         throw KaptivateException("Kaptivate is not currently running");
-    if(!_suspendProcessing)
+    if(!kaptivateSuspendProcessing)
         throw KaptivateException("Kaptivate is already running");
-    _suspendProcessing = true;
+    kaptivateSuspendProcessing = true;
     if(0 != kaptivateHookUnpause())
         throw KaptivateException("Unable to resume hook processing");
 }
@@ -495,7 +504,7 @@ bool KaptivateAPI::isRunning() const
 // Is Kaptivate paused?
 bool KaptivateAPI::isSuspended() const
 {
-    return _suspendProcessing;
+    return kaptivateSuspendProcessing;
 }
 
 

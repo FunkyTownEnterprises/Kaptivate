@@ -43,14 +43,13 @@
 
 namespace Kaptivate
 {
-    class DeviceHandlerMap;
-
     // What should be done with a particular event?
     enum Decision
     {
-        PERMIT = 0,
-        CONSUME = 1,
-        PASS = 2
+        UNDECIDED = 0,
+        PERMIT = 1,
+        CONSUME = 2,
+        PASS = 3
     };
 
     // Information about a particular keyboard
@@ -126,9 +125,6 @@ namespace Kaptivate
         // Status
         bool running;
         bool suspended;
-
-        // Device handler stuff
-        DeviceHandlerMap* kaptivateHandler;
 
         // Stuff for the main message loop thread
         HANDLE msgLoopThread;

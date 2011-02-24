@@ -137,6 +137,8 @@ namespace Kaptivate
         // To keep track of what type of devices we want from the raw API
         bool rawKeyboardRunning;
         bool rawMouseRunning;
+        bool userWantsMouse;
+        bool userWantsKeyboard;
 
         // Internal utility methods
         bool tryStopMsgLoop();

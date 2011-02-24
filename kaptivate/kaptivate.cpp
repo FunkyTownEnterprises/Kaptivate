@@ -72,9 +72,10 @@ KaptivateAPI* KaptivateAPI::singleton = NULL;
 KaptivateAPI::KaptivateAPI()
 {
     running   = false;
-    suspended = false;
     rawKeyboardRunning = false;
     rawMouseRunning = false;
+    userWantsMouse = false;
+    userWantsKeyboard = false;
     msgLoopThread = 0;
     kaptivateHandler = new DeviceHandlerMap();
 }
@@ -125,24 +126,37 @@ void KaptivateAPI::destroyInstance()
 // Event processing
 
 static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0, kaptivatePingMessage = 0;
+static bool _suspendProcessing = false;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if(WM_INPUT == message)
     {
-        // Process the raw input here
+        if(_suspendProcessing)
+            return 0;
+
+        // TODO: Process the raw input here
+        //return 0;
     }
     else if(kaptivateMouseMessage == message)
     {
-        // Handle the mouse message here
+        if(_suspendProcessing)
+            return 0;
+
+        // TODO: Handle the mouse message here
+        //return 0;
     }
     else if(kaptivateKeyboardMessage == message)
     {
-        // Handle the keyboard message here
+        if(_suspendProcessing)
+            return 0;
+
+        // TODO: Handle the keyboard message here
+        //return 0;
     }
     else if(kaptivatePingMessage == message)
     {
-        // Pong
+        // Ping / Pong
         return 1;
     }
 
@@ -216,6 +230,7 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
 ////////////////////////////////////////////////////////////////////////////////
 // Start / Stop
 
+// Begin capturing keyboard and / or mouse events
 void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSuspended, UINT msgTimeoutMs)
 {
     if(!wantMouse && !wantKeyboard)
@@ -233,6 +248,7 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
 
     kaptivatePingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
                                                                                            // random, but special... to me.
+    _suspendProcessing = startSuspended;
 
     // Set up the data we're going to pass in
     kapMsgLoopParams params;
@@ -248,9 +264,9 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
     // Wait for the thread to decide whether or not everything is good
     WaitForSingleObject(params.msgEvent, INFINITE);
     CloseHandle (params.msgEvent);
-
     if(!params.success)
         throw KaptivateException("Failed to initialize the message window");
+    this->callbackWindow = params.callbackWindow;
     if(!pingMessageWindow())
         throw KaptivateException("Something horrible has happened");
 
@@ -263,7 +279,6 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
                 throw KaptivateException("Failed to start raw capture");
         }
 
-        this->callbackWindow = params.callbackWindow;
         short ss = (startSuspended) ? 1 : 0;
         if(0 != kaptivateHookInit(this->callbackWindow, kaptivateKeyboardMessage,
                                   kaptivateMouseMessage, msgTimeoutMs, ss))
@@ -276,9 +291,12 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         throw;
     }
 
+    userWantsMouse = wantMouse;
+    userWantsKeyboard = wantKeyboard;
     running = true;
 }
 
+// Stop capturing keyboard and mouse events
 void KaptivateAPI::stopCapture()
 {
     if(!running)
@@ -293,8 +311,11 @@ void KaptivateAPI::stopCapture()
         throw KaptivateException("Failed to stop the main Kaptivate message loop");
 
     running = false;
+    userWantsMouse = false;
+    userWantsKeyboard = false;
 }
 
+// Attempt to stop the message loop thread
 bool KaptivateAPI::tryStopMsgLoop()
 {
     // Tell the window we're done
@@ -309,6 +330,7 @@ bool KaptivateAPI::tryStopMsgLoop()
     return true;
 }
 
+// Register for raw input events
 bool KaptivateAPI::startRawCapture(bool wantMouse, bool wantKeyboard)
 {
     if(rawKeyboardRunning || rawMouseRunning)
@@ -357,6 +379,7 @@ bool KaptivateAPI::startRawCapture(bool wantMouse, bool wantKeyboard)
     return true;
 }
 
+// Unregister all raw input events
 bool KaptivateAPI::stopRawCapture()
 {
     if(!rawKeyboardRunning && !rawMouseRunning)
@@ -406,6 +429,7 @@ bool KaptivateAPI::stopRawCapture()
     return true;
 }
 
+// Ensure that the message window is alive and kicking
 bool KaptivateAPI::pingMessageWindow() const
 {
     LRESULT res;
@@ -424,32 +448,41 @@ bool KaptivateAPI::pingMessageWindow() const
             return true;
         }
     }
-
-    return true;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Suspend / Resume
 
+// Keep our hooks alive, but temporarily suspend capturing the events
 void KaptivateAPI::suspendCapture()
 {
+    if(!running)
+        throw KaptivateException("Kaptivate is not currently running");
+    if(_suspendProcessing)
+        throw KaptivateException("Kaptivate is already suspended");
     if(0 != kaptivateHookPause())
-        throw KaptivateException("Please call startCapture first");
-    suspended = true;
+        throw KaptivateException("Unable to suspend hook processing");
+    _suspendProcessing = true;
 }
 
+// Assume that our hooks are alive, and resume capturing events
 void KaptivateAPI::resumeCapture()
 {
+    if(!running)
+        throw KaptivateException("Kaptivate is not currently running");
+    if(!_suspendProcessing)
+        throw KaptivateException("Kaptivate is already running");
+    _suspendProcessing = true;
     if(0 != kaptivateHookUnpause())
-        throw KaptivateException("Please call startCapture first");
-    suspended = false;
+        throw KaptivateException("Unable to resume hook processing");
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Status
 
+// Is Kaptivate initialized and capturing events?
 bool KaptivateAPI::isRunning() const
 {
     if(!running)
@@ -459,9 +492,10 @@ bool KaptivateAPI::isRunning() const
     return true;
 }
 
+// Is Kaptivate paused?
 bool KaptivateAPI::isSuspended() const
 {
-    return suspended;
+    return _suspendProcessing;
 }
 
 

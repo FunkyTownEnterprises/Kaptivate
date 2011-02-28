@@ -134,14 +134,56 @@ void KaptivateAPI::destroyInstance()
 ////////////////////////////////////////////////////////////////////////////////
 // Event processing
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static void ProcessRawKeyboardInput(RAWINPUT* raw)
+{
+    bool keyUp = false;
+    if((raw->data.keyboard.Flags & RI_KEY_BREAK) == RI_KEY_BREAK)
+        keyUp = true;
+    else if((raw->data.keyboard.Flags & RI_KEY_MAKE) != RI_KEY_MAKE)
+        return;
+
+    HANDLE device = raw->header.hDevice;
+    unsigned int vkey = raw->data.keyboard.VKey;
+    unsigned int scanCode = raw->data.keyboard.MakeCode;
+    unsigned int message = raw->data.keyboard.Message;
+
+    // TODO: Enqueue this event and return
+}
+
+static void ProcessRawMouseInput(RAWINPUT* raw)
+{
+}
+
+static void ProcessRawInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    unsigned int pcbSize = 0;
+    GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &pcbSize, sizeof(RAWINPUTHEADER));
+    if(pcbSize == 0)
+        return;
+
+    void* buf = malloc(pcbSize);
+    if(buf == NULL)
+        return;
+    if(pcbSize != GetRawInputData((HRAWINPUT)lParam, RID_INPUT, buf, &pcbSize, sizeof(RAWINPUTHEADER)))
+        goto cleanup;
+
+    RAWINPUT* raw = (RAWINPUT*)buf;
+    if(raw->header.dwType == RIM_TYPEMOUSE)
+        ProcessRawMouseInput(raw);
+    else if(raw->header.dwType == RIM_TYPEKEYBOARD)
+        ProcessRawKeyboardInput(raw);
+
+cleanup:
+    free(buf);
+    return;    
+}
+
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if(WM_INPUT == message)
     {
-        if(kaptivateSuspendProcessing)
-            return 0;
-
-        // TODO: Process the raw input here
+        if(!kaptivateSuspendProcessing)
+            ProcessRawInput(hWnd, message, wParam, lParam);
         return 0;
     }
     else if(kaptivateMouseMessage == message)

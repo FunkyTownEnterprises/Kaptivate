@@ -197,6 +197,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\event_queue.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\hooks.cpp"
 				>
 			</File>
@@ -236,6 +240,10 @@
 			>
 			<File
 				RelativePath=".\device_handler_map.h"
+				>
+			</File>
+			<File
+				RelativePath=".\event_queue.h"
 				>
 			</File>
 			<File

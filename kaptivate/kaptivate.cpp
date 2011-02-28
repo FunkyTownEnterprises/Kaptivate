@@ -586,3 +586,54 @@ void KaptivateAPI::unregisterMouseHandler(MouseHandler* handler)
 {
     kaptivateHandler->unregisterMouseHandler(handler);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Keyboard Event
+
+KeyboardEvent::KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scanCode, unsigned int wmMessage, bool keyUp)
+{
+    this->device = device;
+    this->vkey = vkey;
+    this->scanCode = scanCode;
+    this->wmMessage = wmMessage;
+    this->keyUp = keyUp;
+}
+
+KeyboardEvent::~KeyboardEvent()
+{
+}
+
+HANDLE KeyboardEvent::getDevice() const
+{
+    return device;
+}
+
+unsigned int KeyboardEvent::getVkey() const
+{
+    return vkey;
+}
+
+unsigned int KeyboardEvent::getScanCode() const
+{
+    return scanCode;
+}
+
+unsigned int KeyboardEvent::getWindowMessage() const
+{
+    return wmMessage;
+}
+
+bool KeyboardEvent::getKeyUp() const
+{
+    return keyUp;
+}
+
+Decision KeyboardEvent::getDecision() const
+{
+    return decision;
+}
+
+void KeyboardEvent::setDecision(Decision decision)
+{
+    this->decision = decision;
+}

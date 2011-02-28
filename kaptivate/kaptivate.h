@@ -61,9 +61,26 @@ namespace Kaptivate
     // Describes a keyboard event
     class KAPTIVATE_API KeyboardEvent
     {
+    private:
+        HANDLE device;
+        unsigned int vkey;
+        unsigned int scanCode;
+        unsigned int wmMessage;
+        bool keyUp;
+        Decision decision;
+
     public:
-        KeyboardEvent();
+        KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scanCode, unsigned int wmMessage, bool keyUp);
         ~KeyboardEvent();
+
+        HANDLE getDevice() const;
+        unsigned int getVkey() const;
+        unsigned int getScanCode() const;
+        unsigned int getWindowMessage() const;
+        bool getKeyUp() const;
+
+        Decision getDecision() const;
+        void setDecision(Decision decision);
     };
 
     // An interface for a keyboard event handler

@@ -55,7 +55,8 @@ namespace Kaptivate
     // Information about a particular keyboard
     struct KeyboardInfo
     {
-        std::string id;
+        HANDLE device;
+        std::string name;
     };
 
     // Describes a keyboard event
@@ -73,7 +74,7 @@ namespace Kaptivate
         KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scanCode, unsigned int wmMessage, bool keyUp);
         ~KeyboardEvent();
 
-        HANDLE getDevice() const;
+        HANDLE getDeviceHandle() const;
         unsigned int getVkey() const;
         unsigned int getScanCode() const;
         unsigned int getWindowMessage() const;
@@ -93,7 +94,8 @@ namespace Kaptivate
     // Information about a particular mouse
     struct MouseInfo
     {
-        std::string id;
+        HANDLE device;
+        std::string name;
     };
 
     // Describes a mouse button event

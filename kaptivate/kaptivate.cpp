@@ -44,7 +44,8 @@
 #include "kaptivate.h"
 #include "kaptivate_exceptions.h"
 #include "hooks.h"
-#include "device_handler_map.h"
+#include "event_dispatcher.h"
+#include "event_queue.h"
 
 #include <iostream>
 using namespace std;
@@ -56,7 +57,8 @@ using namespace Kaptivate;
 extern HMODULE kaptivateDllModule;
 static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0, kaptivatePingMessage = 0;
 static bool kaptivateSuspendProcessing = false;
-static DeviceHandlerMap* kaptivateHandler = NULL;
+static EventDispatcher* kaptivateDispatcher = NULL;
+static EventQueue* kaptivateEvents = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data passed from startCapture to the main event loop
@@ -85,7 +87,8 @@ KaptivateAPI::KaptivateAPI()
     userWantsMouse = false;
     userWantsKeyboard = false;
     msgLoopThread = 0;
-    kaptivateHandler = new DeviceHandlerMap();
+    kaptivateDispatcher = new EventDispatcher();
+    kaptivateEvents = new EventQueue();
 }
 
 // Destructor
@@ -93,8 +96,12 @@ KaptivateAPI::~KaptivateAPI()
 {
     if(isRunning())
         stopCapture();
-    delete kaptivateHandler;
-    kaptivateHandler = NULL;
+
+    delete kaptivateDispatcher;
+    kaptivateDispatcher = NULL;
+
+    delete kaptivateEvents;
+    kaptivateEvents = NULL;
 }
 
 // Get an instance of this thing
@@ -147,11 +154,55 @@ static void ProcessRawKeyboardInput(RAWINPUT* raw)
     unsigned int scanCode = raw->data.keyboard.MakeCode;
     unsigned int message = raw->data.keyboard.Message;
 
-    // TODO: Enqueue this event and return
+    KeyboardEvent* kev = new KeyboardEvent(device, vkey, scanCode, message, keyUp);
+    kaptivateEvents->EnqueueKeyboardEvent(kev);
+}
+
+static LRESULT ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    unsigned int vkey = (unsigned int)wParam & 255;
+    unsigned int scanCode = (((unsigned int)lParam) >> 16) & 255;
+
+    KeyboardEvent* evt = NULL;
+
+    do
+    {
+        evt = kaptivateEvents->DequeueKeyboardEvent();
+
+        if(evt == NULL)
+        {
+            MSG msg;
+            while(!PeekMessage(&msg, hWnd, WM_INPUT, WM_INPUT, PM_REMOVE));
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        if(evt != NULL)
+        {
+            if((evt->getVkey() & 255) != vkey)
+            {
+                delete evt;
+                evt = NULL;
+            }
+        }
+
+    } while(evt == NULL);
+
+    LRESULT retCode = 0; // 0 means pass along
+    kaptivateDispatcher->handleKeyboard(*evt);
+    if(evt->getDecision() == CONSUME)
+        retCode = 1; // 1 means consume
+    delete evt;
+    return retCode;
 }
 
 static void ProcessRawMouseInput(RAWINPUT* raw)
 {
+}
+
+static LRESULT ProcessMouseHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+    return 0;
 }
 
 static void ProcessRawInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -190,21 +241,13 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     {
         if(kaptivateSuspendProcessing)
             return 0;
-
-        // TODO: Handle the mouse message here
-        //return 0;
+        return ProcessMouseHook(hWnd, wParam, lParam);
     }
     else if(kaptivateKeyboardMessage == message)
     {
         if(kaptivateSuspendProcessing)
             return 0;
-
-        // TODO: Handle the keyboard message here
-        //kaptivateHandler->handleKeyboard(...);
-        //if(evt.action == CONSUME)
-        //    return 1; // > 0 means consume
-        //else
-        //    return 0; // 0 means pass
+        return ProcessKeyboardHook(hWnd, wParam, lParam);
     }
     else if(kaptivatePingMessage == message)
     {
@@ -555,12 +598,12 @@ bool KaptivateAPI::isSuspended() const
 
 vector<KeyboardInfo> KaptivateAPI::enumerateKeyboards()
 {
-    return kaptivateHandler->enumerateKeyboards();
+    return kaptivateDispatcher->enumerateKeyboards();
 }
 
 vector<MouseInfo> KaptivateAPI::enumerateMice()
 {
-    return kaptivateHandler->enumerateMice();
+    return kaptivateDispatcher->enumerateMice();
 }
 
 
@@ -569,28 +612,29 @@ vector<MouseInfo> KaptivateAPI::enumerateMice()
 
 void KaptivateAPI::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)
 {
-    kaptivateHandler->registerKeyboardHandler(idRegex, handler);
+    kaptivateDispatcher->registerKeyboardHandler(idRegex, handler);
 }
 
 void KaptivateAPI::resgisterMouseHandler(string idRegex, MouseHandler* handler)
 {
-    kaptivateHandler->resgisterMouseHandler(idRegex, handler);
+    kaptivateDispatcher->resgisterMouseHandler(idRegex, handler);
 }
 
 void KaptivateAPI::unregisterKeyboardHandler(KeyboardHandler* handler)
 {
-    kaptivateHandler->unregisterKeyboardHandler(handler);
+    kaptivateDispatcher->unregisterKeyboardHandler(handler);
 }
 
 void KaptivateAPI::unregisterMouseHandler(MouseHandler* handler)
 {
-    kaptivateHandler->unregisterMouseHandler(handler);
+    kaptivateDispatcher->unregisterMouseHandler(handler);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Keyboard Event
 
-KeyboardEvent::KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scanCode, unsigned int wmMessage, bool keyUp)
+KeyboardEvent::KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scanCode,
+                             unsigned int wmMessage, bool keyUp)
 {
     this->device = device;
     this->vkey = vkey;
@@ -603,7 +647,7 @@ KeyboardEvent::~KeyboardEvent()
 {
 }
 
-HANDLE KeyboardEvent::getDevice() const
+HANDLE KeyboardEvent::getDeviceHandle() const
 {
     return device;
 }

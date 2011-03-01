@@ -1,5 +1,5 @@
 /*
- * device_handler_map.h
+ * event_dispatcher.h
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -31,6 +31,7 @@
 
 #pragma once
 
+#include <map>
 #include <vector>
 #include <iostream>
 
@@ -45,19 +46,21 @@ namespace Kaptivate
     struct KeyboardInfo;
     struct MouseInfo;
 
-    class DeviceHandlerMap
+    class EventDispatcher
     {
     private:
+        std::map<HANDLE, KeyboardInfo*> keyboardDevices;
+        std::map<HANDLE, MouseInfo*> mouseDevices;
         void scanDevices();
 
     public:
-        DeviceHandlerMap();
-        ~DeviceHandlerMap();
+        EventDispatcher();
+        ~EventDispatcher();
 
-        void handleKeyboard(HANDLE deviceID, KeyboardEvent& evt);
-        void handleMouseButton(HANDLE deviceID, MouseButtonEvent& evt);
-        void handleMouseWheel(HANDLE deviceID, MouseWheelEvent& evt);
-        void handleMouseMove(HANDLE deviceID, MouseMoveEvent& evt);
+        void handleKeyboard(KeyboardEvent& evt);
+        void handleMouseButton(MouseButtonEvent& evt);
+        void handleMouseWheel(MouseWheelEvent& evt);
+        void handleMouseMove(MouseMoveEvent& evt);
 
         std::vector<KeyboardInfo> enumerateKeyboards();
         std::vector<MouseInfo> enumerateMice();

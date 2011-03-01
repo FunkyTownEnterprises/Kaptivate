@@ -41,3 +41,19 @@ EventQueue::EventQueue()
 EventQueue::~EventQueue()
 {
 }
+
+void EventQueue::EnqueueKeyboardEvent(KeyboardEvent* kbdEvent)
+{
+    keyboardEventQueue.push(kbdEvent);
+}
+
+KeyboardEvent* EventQueue::DequeueKeyboardEvent()
+{
+    if(keyboardEventQueue.empty())
+        return NULL;
+
+    KeyboardEvent* evt = keyboardEventQueue.front();
+    keyboardEventQueue.pop();
+
+    return evt;
+}

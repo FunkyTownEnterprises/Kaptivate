@@ -31,13 +31,22 @@
 
 #pragma once
 
+#include <queue>
+
 namespace Kaptivate
 {
+    class KeyboardEvent;
+
     class EventQueue
     {
     private:
+        std::queue<KeyboardEvent*> keyboardEventQueue;
+
     public:
         EventQueue();
         ~EventQueue();
+
+        void EnqueueKeyboardEvent(KeyboardEvent* kbdEvent);
+        KeyboardEvent* DequeueKeyboardEvent();
     };
 }

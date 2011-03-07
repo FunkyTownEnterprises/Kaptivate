@@ -136,6 +136,8 @@ void EventDispatcher::scanDevices()
             continue;
         if(keyboardDevices.count(rid.hDevice) > 0)
             continue;
+        if(mouseDevices.count(rid.hDevice) > 0)
+            continue;
 
         UINT pcbSize = 0;
         if(0 != GetRawInputDeviceInfo(rid.hDevice, RIDI_DEVICENAME, NULL, &pcbSize))

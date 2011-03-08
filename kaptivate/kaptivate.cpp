@@ -125,6 +125,12 @@ KaptivateAPI* KaptivateAPI::getInstance()
             throw KaptivateException("Unable to release the lock");
         throw KaptivateException("Unable to allocate memory for the Kaptivate singleton");
     }
+    catch(...)
+    {
+        if (!ReleaseMutex(kaptivateMutex))
+            throw KaptivateException("Unable to release the lock");
+        throw;
+    }
 
     if (!ReleaseMutex(kaptivateMutex))
         throw KaptivateException("Unable to release the lock");

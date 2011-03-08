@@ -30,9 +30,13 @@
  */
 
 #include "stdafx.h"
+#include "kaptivate.h"
 
 // Needed for global hooks
 HMODULE kaptivateDllModule = 0;
+
+// Needed for the KaptivateAPI singleton
+HANDLE kaptivateMutex = 0;
 
 // Entry point for the DLL application.
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -46,9 +50,29 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     case DLL_THREAD_ATTACH:
         if(kaptivateDllModule == 0)
             kaptivateDllModule = hModule;
+        if(kaptivateMutex == 0)
+            kaptivateMutex = CreateMutex(NULL, FALSE, NULL);
+
+        if (kaptivateDllModule == 0 || kaptivateMutex == 0)
+        {
+            // TODO: Throw error so bad they'll be like, damn that was a noticable error!
+            // GetLastError()
+        }
+
         break;
+
     case DLL_THREAD_DETACH:
+        break;
+
     case DLL_PROCESS_DETACH:
+
+        if(kaptivateMutex != 0)
+        {
+            Kaptivate::KaptivateAPI::destroyInstance();
+            CloseHandle(kaptivateMutex);
+            kaptivateMutex = 0;
+        }
+
         break;
     }
     return TRUE;

@@ -55,6 +55,7 @@ using namespace Kaptivate;
 // Static and extern data
 
 extern HMODULE kaptivateDllModule;
+extern HANDLE kaptivateMutex;
 static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0, kaptivatePingMessage = 0;
 static bool kaptivateSuspendProcessing = false;
 static EventDispatcher* kaptivateDispatcher = NULL;
@@ -75,7 +76,7 @@ typedef struct _kapMsgLoopParams
 // Creation / destruction
 
 // Singleton static members
-bool KaptivateAPI::instanceFlag       = false;
+//bool KaptivateAPI::instanceFlag       = false;
 KaptivateAPI* KaptivateAPI::singleton = NULL;
 
 // Constructor
@@ -107,20 +108,26 @@ KaptivateAPI::~KaptivateAPI()
 // Get an instance of this thing
 KaptivateAPI* KaptivateAPI::getInstance()
 {
-    if(!instanceFlag)
+    if(kaptivateMutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(kaptivateMutex, INFINITE))
+        throw KaptivateException("Unable to aquire the lock");
+
+    try
     {
-        try
+        if(NULL == singleton)
         {
             if(NULL == (singleton = new KaptivateAPI()))
                 throw bad_alloc();
         }
-        catch(bad_alloc&)
-        {
-            throw KaptivateException("Unable to allocate memory for the Kaptivate singleton");
-        }
-
-        instanceFlag = true;
     }
+    catch(bad_alloc&)
+    {
+        if (!ReleaseMutex(kaptivateMutex))
+            throw KaptivateException("Unable to release the lock");
+        throw KaptivateException("Unable to allocate memory for the Kaptivate singleton");
+    }
+
+    if (!ReleaseMutex(kaptivateMutex))
+        throw KaptivateException("Unable to release the lock");
 
     return singleton;
 }
@@ -128,13 +135,17 @@ KaptivateAPI* KaptivateAPI::getInstance()
 // Destroy the singleton
 void KaptivateAPI::destroyInstance()
 {
-    if(!instanceFlag || singleton == NULL)
-        return;
+    if(kaptivateMutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(kaptivateMutex, INFINITE))
+        throw KaptivateException("Unable to aquire the lock");
 
-    delete singleton;
-    singleton = NULL;
+    if(singleton != NULL)
+    {
+        delete singleton;
+        singleton = NULL;
+    }
 
-    instanceFlag = false;
+    if (!ReleaseMutex(kaptivateMutex))
+        throw KaptivateException("Unable to release the lock");
 }
 
 

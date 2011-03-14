@@ -1,5 +1,5 @@
 /*
- * event_dispatcher.h
+ * scoped_mutex.h
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -31,46 +31,14 @@
 
 #pragma once
 
-#include <map>
-#include <vector>
-#include <iostream>
-
 namespace Kaptivate
 {
-    class KeyboardEvent;
-    class MouseButtonEvent;
-    class MouseWheelEvent;
-    class MouseMoveEvent;
-    class KeyboardHandler;
-    class MouseHandler;
-    struct KeyboardInfo;
-    struct MouseInfo;
-
-    class EventDispatcher
+    class ScopedMutex
     {
     private:
-        HANDLE kdLock;
-        HANDLE mdLock;
-
-        std::map<HANDLE, KeyboardInfo*> keyboardDevices;
-        std::map<HANDLE, MouseInfo*> mouseDevices;
-        void scanDevices();
-
+        HANDLE hMutex;
     public:
-        EventDispatcher();
-        ~EventDispatcher();
-
-        void handleKeyboard(KeyboardEvent& evt);
-        void handleMouseButton(MouseButtonEvent& evt);
-        void handleMouseWheel(MouseWheelEvent& evt);
-        void handleMouseMove(MouseMoveEvent& evt);
-
-        std::vector<KeyboardInfo> enumerateKeyboards();
-        std::vector<MouseInfo> enumerateMice();
-
-        void registerKeyboardHandler(std::string idRegex, KeyboardHandler* handler);
-        void resgisterMouseHandler(std::string idRegex, MouseHandler* handler);
-        void unregisterKeyboardHandler(KeyboardHandler* handler);
-        void unregisterMouseHandler(MouseHandler* handler);
+        ScopedMutex(HANDLE mutex);
+        ~ScopedMutex();
     };
 }

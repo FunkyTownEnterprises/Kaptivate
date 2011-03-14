@@ -46,6 +46,7 @@
 #include "hooks.h"
 #include "event_dispatcher.h"
 #include "event_queue.h"
+#include "scoped_mutex.h"
 
 #include <iostream>
 using namespace std;
@@ -108,8 +109,7 @@ KaptivateAPI::~KaptivateAPI()
 // Get an instance of this thing
 KaptivateAPI* KaptivateAPI::getInstance()
 {
-    if(kaptivateMutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(kaptivateMutex, INFINITE))
-        throw KaptivateException("Unable to aquire the lock");
+    ScopedMutex lock(kaptivateMutex);
 
     try
     {
@@ -121,19 +121,8 @@ KaptivateAPI* KaptivateAPI::getInstance()
     }
     catch(bad_alloc&)
     {
-        if (!ReleaseMutex(kaptivateMutex))
-            throw KaptivateException("Unable to release the lock");
         throw KaptivateException("Unable to allocate memory for the Kaptivate singleton");
     }
-    catch(...)
-    {
-        if (!ReleaseMutex(kaptivateMutex))
-            throw KaptivateException("Unable to release the lock");
-        throw;
-    }
-
-    if (!ReleaseMutex(kaptivateMutex))
-        throw KaptivateException("Unable to release the lock");
 
     return singleton;
 }
@@ -141,17 +130,12 @@ KaptivateAPI* KaptivateAPI::getInstance()
 // Destroy the singleton
 void KaptivateAPI::destroyInstance()
 {
-    if(kaptivateMutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(kaptivateMutex, INFINITE))
-        throw KaptivateException("Unable to aquire the lock");
-
+    ScopedMutex lock(kaptivateMutex);
     if(singleton != NULL)
     {
         delete singleton;
         singleton = NULL;
     }
-
-    if (!ReleaseMutex(kaptivateMutex))
-        throw KaptivateException("Unable to release the lock");
 }
 
 

@@ -29,48 +29,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "stdafx.h"
+#include "scoped_mutex.h"
+#include "kaptivate_exceptions.h"
 
-#include <map>
-#include <vector>
-#include <iostream>
+using namespace Kaptivate;
 
-namespace Kaptivate
+ScopedMutex::ScopedMutex(HANDLE mutex)
 {
-    class KeyboardEvent;
-    class MouseButtonEvent;
-    class MouseWheelEvent;
-    class MouseMoveEvent;
-    class KeyboardHandler;
-    class MouseHandler;
-    struct KeyboardInfo;
-    struct MouseInfo;
+    hMutex = mutex;
+    if(mutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(mutex, INFINITE))
+        throw KaptivateException("Unable to aquire the lock");
+}
 
-    class EventDispatcher
-    {
-    private:
-        HANDLE kdLock;
-        HANDLE mdLock;
-
-        std::map<HANDLE, KeyboardInfo*> keyboardDevices;
-        std::map<HANDLE, MouseInfo*> mouseDevices;
-        void scanDevices();
-
-    public:
-        EventDispatcher();
-        ~EventDispatcher();
-
-        void handleKeyboard(KeyboardEvent& evt);
-        void handleMouseButton(MouseButtonEvent& evt);
-        void handleMouseWheel(MouseWheelEvent& evt);
-        void handleMouseMove(MouseMoveEvent& evt);
-
-        std::vector<KeyboardInfo> enumerateKeyboards();
-        std::vector<MouseInfo> enumerateMice();
-
-        void registerKeyboardHandler(std::string idRegex, KeyboardHandler* handler);
-        void resgisterMouseHandler(std::string idRegex, MouseHandler* handler);
-        void unregisterKeyboardHandler(KeyboardHandler* handler);
-        void unregisterMouseHandler(MouseHandler* handler);
-    };
+ScopedMutex::~ScopedMutex()
+{
+    ReleaseMutex(hMutex);
 }

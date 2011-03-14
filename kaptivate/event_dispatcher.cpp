@@ -32,6 +32,8 @@
 #include "stdafx.h"
 #include "event_dispatcher.h"
 #include "kaptivate.h"
+#include "kaptivate_exceptions.h"
+#include "scoped_mutex.h"
 
 #include <iostream>
 using namespace std;
@@ -39,14 +41,19 @@ using namespace Kaptivate;
 
 EventDispatcher::EventDispatcher()
 {
+    kdLock = CreateMutex(NULL, FALSE, NULL);
+    mdLock = CreateMutex(NULL, FALSE, NULL);
 }
 
 EventDispatcher::~EventDispatcher()
 {
+    CloseHandle(kdLock);
+    CloseHandle(mdLock);
 }
 
 void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
 {
+
 }
 
 void EventDispatcher::handleMouseButton(MouseButtonEvent& evt)
@@ -95,84 +102,90 @@ void EventDispatcher::scanDevices()
     PRAWINPUTDEVICELIST pRawInputDeviceList = NULL;
 
     if(GetRawInputDeviceList(NULL, &nDevices, sizeof(RAWINPUTDEVICELIST)) != 0)
-    {
-        // TODO: Throw an error
-    }
+        throw KaptivateException("Call to GetRawInputDeviceList(1) failed");
 
     if(nDevices > 0)
     {
         if((pRawInputDeviceList = (PRAWINPUTDEVICELIST)malloc(sizeof(RAWINPUTDEVICELIST) * nDevices)) == NULL)
-        {
-            // TODO: Throw an error
-        }
-
+            throw KaptivateException("Failed to allocate memory for the raw device list");
         if(GetRawInputDeviceList(pRawInputDeviceList, &nDevices, sizeof(RAWINPUTDEVICELIST)) == (UINT)-1)
         {
             free(pRawInputDeviceList);
-            // TODO: Throw an error
+            throw KaptivateException("Call to GetRawInputDeviceList(2) failed");
         }
     }
 
-    // TODO: Lock
-
     {
-        map<HANDLE, KeyboardInfo*>::iterator it;
-        for(it = keyboardDevices.begin() ; it != keyboardDevices.end(); it++)
-            delete (*it).second;
-        keyboardDevices.clear();
-    }
+        // Begin lock
 
-    {
-        map<HANDLE, MouseInfo*>::iterator it;
-        for(it = mouseDevices.begin() ; it != mouseDevices.end(); it++)
-            delete (*it).second;
-        mouseDevices.clear();
-    }
+        ScopedMutex kMutex(kdLock);
+        ScopedMutex mMutex(mdLock);
 
-    for(UINT i = 0; i < nDevices; i++)
-    {
-        RAWINPUTDEVICELIST& rid = pRawInputDeviceList[i];
-        if(rid.dwType != RIM_TYPEKEYBOARD && rid.dwType != RIM_TYPEMOUSE)
-            continue;
-        if(keyboardDevices.count(rid.hDevice) > 0)
-            continue;
-        if(mouseDevices.count(rid.hDevice) > 0)
-            continue;
-
-        UINT pcbSize = 0;
-        if(0 != GetRawInputDeviceInfo(rid.hDevice, RIDI_DEVICENAME, NULL, &pcbSize))
-            continue;
-
-        if (pcbSize > 0)
         {
-            char* cDevName = (char*)malloc(sizeof(TCHAR) * pcbSize);
-            if(cDevName != NULL)
-            {
-                if(GetRawInputDeviceInfo(rid.hDevice, RIDI_DEVICENAME, (LPVOID)cDevName, &pcbSize) > 0)
-                {
-                    string devName(cDevName); 
-                    if(rid.dwType == RIM_TYPEKEYBOARD)
-                    {
-                        KeyboardInfo* kbi = new KeyboardInfo();
-                        kbi->device = rid.hDevice;
-                        kbi->name = devName;
-                        keyboardDevices[rid.hDevice] = kbi;
-                    }
-                    else if(rid.dwType == RIM_TYPEMOUSE)
-                    {
-                        MouseInfo* mi = new MouseInfo();
-                        mi->device = rid.hDevice;
-                        mi->name = devName;
-                        mouseDevices[rid.hDevice] = mi;
-                    }
-                }
+            map<HANDLE, KeyboardInfo*>::iterator it;
+            for(it = keyboardDevices.begin() ; it != keyboardDevices.end(); it++)
+                delete (*it).second;
+            keyboardDevices.clear();
+        }
 
-                free(cDevName);
+        {
+            map<HANDLE, MouseInfo*>::iterator it;
+            for(it = mouseDevices.begin() ; it != mouseDevices.end(); it++)
+                delete (*it).second;
+            mouseDevices.clear();
+        }
+
+        for(UINT i = 0; i < nDevices; i++)
+        {
+            RAWINPUTDEVICELIST& rid = pRawInputDeviceList[i];
+            if(rid.dwType != RIM_TYPEKEYBOARD && rid.dwType != RIM_TYPEMOUSE)
+                continue;
+            if(keyboardDevices.count(rid.hDevice) > 0)
+                continue;
+            if(mouseDevices.count(rid.hDevice) > 0)
+                continue;
+
+            UINT pcbSize = 0;
+            if(0 != GetRawInputDeviceInfo(rid.hDevice, RIDI_DEVICENAME, NULL, &pcbSize))
+                continue;
+
+            if (pcbSize > 0)
+            {
+                char* cDevName = (char*)malloc(sizeof(TCHAR) * pcbSize);
+                if(cDevName != NULL)
+                {
+                    if(GetRawInputDeviceInfo(rid.hDevice, RIDI_DEVICENAME, (LPVOID)cDevName, &pcbSize) > 0)
+                    {
+                        string devName(cDevName); 
+                        if(rid.dwType == RIM_TYPEKEYBOARD)
+                        {
+                            if(keyboardDevices.count(rid.hDevice) == 0)
+                            {
+                                KeyboardInfo* kbi = new KeyboardInfo();
+                                kbi->device = rid.hDevice;
+                                kbi->name = devName;
+                                keyboardDevices[rid.hDevice] = kbi;
+                            }
+                        }
+                        else if(rid.dwType == RIM_TYPEMOUSE)
+                        {
+                            if(mouseDevices.count(rid.hDevice))
+                            {
+                                MouseInfo* mi = new MouseInfo();
+                                mi->device = rid.hDevice;
+                                mi->name = devName;
+                                mouseDevices[rid.hDevice] = mi;
+                            }
+                        }
+                    }
+
+                    free(cDevName);
+                }
             }
         }
-    }
 
-    // TODO: Unlock
+        // End lock
+    }
 
     if(pRawInputDeviceList)
         free(pRawInputDeviceList);

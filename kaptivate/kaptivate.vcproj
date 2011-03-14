@@ -213,6 +213,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\scoped_mutex.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -256,6 +260,10 @@
 			</File>
 			<File
 				RelativePath=".\kaptivate_exceptions.h"
+				>
+			</File>
+			<File
+				RelativePath=".\scoped_mutex.h"
 				>
 			</File>
 			<File

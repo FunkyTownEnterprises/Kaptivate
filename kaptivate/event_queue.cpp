@@ -44,16 +44,64 @@ EventQueue::~EventQueue()
 
 void EventQueue::EnqueueKeyboardEvent(KeyboardEvent* kbdEvent)
 {
-    keyboardEventQueue.push(kbdEvent);
+    kbEventQueue.push(kbdEvent);
 }
 
 KeyboardEvent* EventQueue::DequeueKeyboardEvent()
 {
-    if(keyboardEventQueue.empty())
+    if(kbEventQueue.empty())
         return NULL;
 
-    KeyboardEvent* evt = keyboardEventQueue.front();
-    keyboardEventQueue.pop();
+    KeyboardEvent* evt = kbEventQueue.front();
+    kbEventQueue.pop();
+
+    return evt;
+}
+
+void EventQueue::EnqueueMouseButtonEvent(MouseButtonEvent* mbEvent)
+{
+    mbEventQueue.push(mbEvent);
+}
+
+MouseButtonEvent* EventQueue::DequeueMouseButtonEvent()
+{
+    if(mbEventQueue.empty())
+        return NULL;
+
+    MouseButtonEvent* evt = mbEventQueue.front();
+    mbEventQueue.pop();
+
+    return evt;
+}
+
+void EventQueue::EnqueueMouseWheelEvent(MouseWheelEvent* mwEvent)
+{
+    mwEventQueue.push(mwEvent);
+}
+
+MouseWheelEvent* EventQueue::DequeueMouseWheelEvent()
+{
+    if(mwEventQueue.empty())
+        return NULL;
+
+    MouseWheelEvent* evt = mwEventQueue.front();
+    mwEventQueue.pop();
+
+    return evt;
+}
+
+void EventQueue::EnqueueMouseMoveEvent(MouseMoveEvent* mmEvent)
+{
+    mmEventQueue.push(mmEvent);
+}
+
+MouseMoveEvent* EventQueue::DequeueMouseMoveEvent()
+{
+    if(mmEventQueue.empty())
+        return NULL;
+
+    MouseMoveEvent* evt = mmEventQueue.front();
+    mmEventQueue.pop();
 
     return evt;
 }

@@ -131,6 +131,10 @@ namespace Kaptivate
         virtual void HandleMoveEvent(MouseMoveEvent& evt) = 0;
     };
 
+    // Dummy declarations
+    class EventDispatcher;
+    class EventQueue;
+
     // The main Kaptivate API
     class KAPTIVATE_API KaptivateAPI
     {
@@ -140,6 +144,10 @@ namespace Kaptivate
         KaptivateAPI();
         static bool instanceFlag;
         static KaptivateAPI *singleton;
+
+        // Class members
+        EventDispatcher* dispatcher;
+        EventQueue* events;
 
         // Status
         bool running;
@@ -160,6 +168,20 @@ namespace Kaptivate
         bool pingMessageWindow() const;
         bool startRawCapture(bool wantMouse, bool wantKeyboard);
         bool stopRawCapture();
+
+        // Message processing methods
+        void ProcessRawInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+        LRESULT ProcessMouseHook(HWND hWnd, WPARAM wParam, LPARAM lParam);
+        void ProcessRawMouseInput(RAWINPUT* raw);
+
+        LRESULT ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam);
+        void ProcessRawKeyboardInput(RAWINPUT* raw);
+
+        // Message processing members
+        UINT keyboardMessage;
+        UINT mouseMessage;
+        UINT pingMessage;
 
     public:
 
@@ -192,5 +214,8 @@ namespace Kaptivate
         void resgisterMouseHandler(std::string idRegex, MouseHandler* handler);
         void unregisterKeyboardHandler(KeyboardHandler* handler);
         void unregisterMouseHandler(MouseHandler* handler);
+
+        // Window message processing
+        LRESULT _ProcessWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     };
 }

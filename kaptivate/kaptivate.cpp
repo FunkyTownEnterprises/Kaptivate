@@ -49,6 +49,7 @@
 #include "scoped_mutex.h"
 
 #include <iostream>
+#include <assert.h>
 using namespace std;
 using namespace Kaptivate;
 
@@ -57,10 +58,7 @@ using namespace Kaptivate;
 
 extern HMODULE kaptivateDllModule;
 extern HANDLE kaptivateMutex;
-static UINT kaptivateKeyboardMessage = 0, kaptivateMouseMessage = 0, kaptivatePingMessage = 0;
-static bool kaptivateSuspendProcessing = false;
-static EventDispatcher* kaptivateDispatcher = NULL;
-static EventQueue* kaptivateEvents = NULL;
+static KaptivateAPI* _localInstance = NULL;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data passed from startCapture to the main event loop
@@ -77,20 +75,23 @@ typedef struct _kapMsgLoopParams
 // Creation / destruction
 
 // Singleton static members
-//bool KaptivateAPI::instanceFlag       = false;
 KaptivateAPI* KaptivateAPI::singleton = NULL;
 
 // Constructor
 KaptivateAPI::KaptivateAPI()
 {
-    running   = false;
+    running = false;
+    suspended = false;
     rawKeyboardRunning = false;
     rawMouseRunning = false;
     userWantsMouse = false;
     userWantsKeyboard = false;
     msgLoopThread = 0;
-    kaptivateDispatcher = new EventDispatcher();
-    kaptivateEvents = new EventQueue();
+    dispatcher = new EventDispatcher();
+    events = new EventQueue();
+    keyboardMessage = 0;
+    mouseMessage = 0;
+    pingMessage = 0;
 }
 
 // Destructor
@@ -99,11 +100,11 @@ KaptivateAPI::~KaptivateAPI()
     if(isRunning())
         stopCapture();
 
-    delete kaptivateDispatcher;
-    kaptivateDispatcher = NULL;
+    delete dispatcher;
+    dispatcher = NULL;
 
-    delete kaptivateEvents;
-    kaptivateEvents = NULL;
+    delete events;
+    events = NULL;
 }
 
 // Get an instance of this thing
@@ -117,6 +118,7 @@ KaptivateAPI* KaptivateAPI::getInstance()
         {
             if(NULL == (singleton = new KaptivateAPI()))
                 throw bad_alloc();
+            _localInstance = singleton;
         }
     }
     catch(bad_alloc&)
@@ -133,6 +135,7 @@ void KaptivateAPI::destroyInstance()
     ScopedMutex lock(kaptivateMutex);
     if(singleton != NULL)
     {
+        _localInstance = NULL;
         delete singleton;
         singleton = NULL;
     }
@@ -142,7 +145,8 @@ void KaptivateAPI::destroyInstance()
 ////////////////////////////////////////////////////////////////////////////////
 // Event processing
 
-static void ProcessRawKeyboardInput(RAWINPUT* raw)
+// Translate a raw keyboard event and stuff it into the queue
+void KaptivateAPI::ProcessRawKeyboardInput(RAWINPUT* raw)
 {
     bool keyUp = false;
     if((raw->data.keyboard.Flags & RI_KEY_BREAK) == RI_KEY_BREAK)
@@ -156,10 +160,13 @@ static void ProcessRawKeyboardInput(RAWINPUT* raw)
     unsigned int message = raw->data.keyboard.Message;
 
     KeyboardEvent* kev = new KeyboardEvent(device, vkey, scanCode, message, keyUp);
-    kaptivateEvents->EnqueueKeyboardEvent(kev);
+    events->EnqueueKeyboardEvent(kev);
 }
 
-static LRESULT ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
+// We're being asked to interpret a keyboard hook event. Wait for the raw keyboard event,
+// and ask the user what to do with it. Make a decision, and return it to the hook so that
+// it can prevent other apps from recieving the event (if so desired).
+LRESULT KaptivateAPI::ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     unsigned int vkey = (unsigned int)wParam & 255;
     unsigned int scanCode = (((unsigned int)lParam) >> 16) & 255;
@@ -168,7 +175,7 @@ static LRESULT ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     do
     {
-        evt = kaptivateEvents->DequeueKeyboardEvent();
+        evt = events->DequeueKeyboardEvent();
 
         if(evt == NULL)
         {
@@ -177,9 +184,9 @@ static LRESULT ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
-
-        if(evt != NULL)
+        else
         {
+            // Make sure it's the one we're waiting for
             if((evt->getVkey() & 255) != vkey)
             {
                 delete evt;
@@ -190,23 +197,29 @@ static LRESULT ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
     } while(evt == NULL);
 
     LRESULT retCode = 0; // 0 means pass along
-    kaptivateDispatcher->handleKeyboard(*evt);
+    dispatcher->handleKeyboard(*evt);
     if(evt->getDecision() == CONSUME)
         retCode = 1; // 1 means consume
     delete evt;
     return retCode;
 }
 
-static void ProcessRawMouseInput(RAWINPUT* raw)
+// Translate a raw mouse event and stuff it into the queue
+void KaptivateAPI::ProcessRawMouseInput(RAWINPUT* raw)
 {
 }
 
-static LRESULT ProcessMouseHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
+// We're being asked to interpret a mouse hook event. Wait for the raw mouse event,
+// and ask the user what to do with it. Make a decision, and return it to the hook so that
+// it can prevent other apps from recieving the event (if so desired).
+LRESULT KaptivateAPI::ProcessMouseHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     return 0;
 }
 
-static void ProcessRawInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+// Our window has recieved an event from the raw api. Figure out what it is, and process it if
+// appropriate.
+void KaptivateAPI::ProcessRawInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     unsigned int pcbSize = 0;
     GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &pcbSize, sizeof(RAWINPUTHEADER));
@@ -227,30 +240,32 @@ static void ProcessRawInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 cleanup:
     free(buf);
-    return;    
+    return;
 }
 
-static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+// The keyboard or mouse hook has been called. This method gets called through some very special
+// magic. Decide what kind of event we're responding to, and call the appropriate handler.
+LRESULT KaptivateAPI::_ProcessWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if(WM_INPUT == message)
     {
-        if(!kaptivateSuspendProcessing)
+        if(!suspended)
             ProcessRawInput(hWnd, message, wParam, lParam);
         return 0;
     }
-    else if(kaptivateMouseMessage == message)
+    else if(mouseMessage == message)
     {
-        if(kaptivateSuspendProcessing)
+        if(suspended)
             return 0;
         return ProcessMouseHook(hWnd, wParam, lParam);
     }
-    else if(kaptivateKeyboardMessage == message)
+    else if(keyboardMessage == message)
     {
-        if(kaptivateSuspendProcessing)
+        if(suspended)
             return 0;
         return ProcessKeyboardHook(hWnd, wParam, lParam);
     }
-    else if(kaptivatePingMessage == message)
+    else if(pingMessage == message)
     {
         // Ping / Pong
         return 1;
@@ -259,10 +274,25 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Main event loop (seperate thread)
 
+// The one, the only, WndProc handler for Kaptivate. All messages from the hooks
+// eventually wind up here.
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if(_localInstance)
+    {
+        return _localInstance->_ProcessWndProc(hWnd, message, wParam, lParam);
+    }
+    else
+    {
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+}
+
+// Runs in a separate thread. Create an invisible window and process all events for
+// that window until the window is told to die.
 static DWORD WINAPI MessageLoop(LPVOID iValue)
 {
     {
@@ -334,16 +364,16 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         throw KaptivateException("Kaptivate is already running");
 
     // Find out what our messaging is going to look like
-    kaptivateMouseMessage = 0;
-    kaptivateKeyboardMessage = 0;
+    mouseMessage = 0;
+    keyboardMessage = 0;
     if(wantMouse)
-        kaptivateMouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
+        mouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
     if(wantKeyboard)
-        kaptivateKeyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
+        keyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
 
-    kaptivatePingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
+    pingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
                                                                                            // random, but special... to me.
-    kaptivateSuspendProcessing = startSuspended;
+    suspended = startSuspended;
 
     // Set up the data we're going to pass in
     kapMsgLoopParams params;
@@ -375,8 +405,8 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         }
 
         short ss = (startSuspended) ? 1 : 0;
-        if(0 != kaptivateHookInit(this->callbackWindow, kaptivateKeyboardMessage,
-                                  kaptivateMouseMessage, msgTimeoutMs, ss))
+        if(0 != kaptivateHookInit(this->callbackWindow, keyboardMessage,
+                                  mouseMessage, msgTimeoutMs, ss))
             throw KaptivateException("Failed to initialize the hooks");
     }
     catch(...)
@@ -532,7 +562,7 @@ bool KaptivateAPI::pingMessageWindow() const
 
     while(true)
     {
-        res = SendMessageTimeout(this->callbackWindow, kaptivatePingMessage, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwres);
+        res = SendMessageTimeout(this->callbackWindow, pingMessage, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwres);
         if(0 == res)
         {
             if(ERROR_TIMEOUT == GetLastError())
@@ -554,11 +584,11 @@ void KaptivateAPI::suspendCapture()
 {
     if(!running)
         throw KaptivateException("Kaptivate is not currently running");
-    if(kaptivateSuspendProcessing)
+    if(suspended)
         throw KaptivateException("Kaptivate is already suspended");
     if(0 != kaptivateHookPause())
         throw KaptivateException("Unable to suspend hook processing");
-    kaptivateSuspendProcessing = true;
+    suspended = true;
 }
 
 // Assume that our hooks are alive, and resume capturing events
@@ -566,9 +596,9 @@ void KaptivateAPI::resumeCapture()
 {
     if(!running)
         throw KaptivateException("Kaptivate is not currently running");
-    if(!kaptivateSuspendProcessing)
+    if(!suspended)
         throw KaptivateException("Kaptivate is already running");
-    kaptivateSuspendProcessing = true;
+    suspended = true;
     if(0 != kaptivateHookUnpause())
         throw KaptivateException("Unable to resume hook processing");
 }
@@ -590,45 +620,51 @@ bool KaptivateAPI::isRunning() const
 // Is Kaptivate paused?
 bool KaptivateAPI::isSuspended() const
 {
-    return kaptivateSuspendProcessing;
+    return suspended;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Device enumeration
 
+// Get a list of all attached keyboards
 vector<KeyboardInfo> KaptivateAPI::enumerateKeyboards()
 {
-    return kaptivateDispatcher->enumerateKeyboards();
+    return dispatcher->enumerateKeyboards();
 }
 
+// Get a list of all attached mice
 vector<MouseInfo> KaptivateAPI::enumerateMice()
 {
-    return kaptivateDispatcher->enumerateMice();
+    return dispatcher->enumerateMice();
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Event handler registration / unregistration
 
+// Tell kaptivate that you're interested in processing messages from a particular keyboard
 void KaptivateAPI::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)
 {
-    kaptivateDispatcher->registerKeyboardHandler(idRegex, handler);
+    dispatcher->registerKeyboardHandler(idRegex, handler);
 }
 
+// Tell kaptivate that you're interested in processing messages from a particular mouse
 void KaptivateAPI::resgisterMouseHandler(string idRegex, MouseHandler* handler)
 {
-    kaptivateDispatcher->resgisterMouseHandler(idRegex, handler);
+    dispatcher->resgisterMouseHandler(idRegex, handler);
 }
 
+// Tell kaptivate that a particular keyboard handler is going away
 void KaptivateAPI::unregisterKeyboardHandler(KeyboardHandler* handler)
 {
-    kaptivateDispatcher->unregisterKeyboardHandler(handler);
+    dispatcher->unregisterKeyboardHandler(handler);
 }
 
+// Tell kaptivate that a particular mouse handler is going away
 void KaptivateAPI::unregisterMouseHandler(MouseHandler* handler)
 {
-    kaptivateDispatcher->unregisterMouseHandler(handler);
+    dispatcher->unregisterMouseHandler(handler);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

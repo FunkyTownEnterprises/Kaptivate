@@ -38,11 +38,35 @@ using namespace Kaptivate;
 ScopedMutex::ScopedMutex(HANDLE mutex)
 {
     hMutex = mutex;
-    if(mutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(mutex, INFINITE))
-        throw KaptivateException("Unable to aquire the lock");
+    locked = false;
+    Lock();
 }
 
 ScopedMutex::~ScopedMutex()
 {
-    ReleaseMutex(hMutex);
+    Unlock();
+}
+
+void ScopedMutex::Lock()
+{
+    if(!locked)
+    {
+        if(hMutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(hMutex, INFINITE))
+            throw KaptivateException("Unable to aquire the lock");
+        locked = true;
+    }
+}
+
+void ScopedMutex::Unlock()
+{
+    if(locked)
+    {
+        ReleaseMutex(hMutex);
+        locked = false;
+    }
+}
+
+bool ScopedMutex::Locked()
+{
+    return locked;
 }

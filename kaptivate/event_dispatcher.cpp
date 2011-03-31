@@ -47,6 +47,8 @@ EventDispatcher::EventDispatcher()
 {
     kdLock = CreateMutex(NULL, FALSE, NULL);
     mdLock = CreateMutex(NULL, FALSE, NULL);
+    kbHRMLock = CreateMutex(NULL, FALSE, NULL);
+    mdHRMLock = CreateMutex(NULL, FALSE, NULL);
 }
 
 // Destructor
@@ -54,6 +56,11 @@ EventDispatcher::~EventDispatcher()
 {
     CloseHandle(kdLock);
     CloseHandle(mdLock);
+    CloseHandle(kbHRMLock);
+    CloseHandle(mdHRMLock);
+
+    cleanupMouseHandlerMap();
+    cleanupKeyboardHandlerMap();
 }
 
 // Dispatch a keyboard event to any registered handlers
@@ -124,11 +131,13 @@ vector<MouseInfo> EventDispatcher::enumerateMice()
 // Register a handler for keyboard events
 void EventDispatcher::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)
 {
+    //addKeyboardHandler(idRegex, handler);
 }
 
 // Register a handler for mouse events
 void EventDispatcher::resgisterMouseHandler(string idRegex, MouseHandler* handler)
 {
+    //addMouseHandler(idRegex, handler);
 }
 
 // Unregister a handler for keyboard events
@@ -139,6 +148,124 @@ void EventDispatcher::unregisterKeyboardHandler(KeyboardHandler* handler)
 // Unregister a handler for mouse events
 void EventDispatcher::unregisterMouseHandler(MouseHandler* handler)
 {
+}
+
+// Add or get a mouse handler for a given regular expression and handler pair
+RexHandler* EventDispatcher::addMouseHandler(std::string regex, MouseHandler* handler)
+{
+    ScopedMutex mMutex(mdHRMLock);
+
+    multimap<string, RexHandler*>::iterator it;
+    pair<multimap<string, RexHandler*>::iterator, multimap<string, RexHandler*>::iterator> ret;
+    ret = mHandlerRexMap.equal_range(regex);
+
+    // Check to see if we've already registered this handler for this regex
+    for (it = ret.first; it != ret.second; ++it)
+    {
+        if((*it).second->mhandler == handler)
+            return (*it).second;
+    }
+
+    // No? Alright then register everything
+    RexHandler* rh = new RexHandler();
+    rh->mhandler = handler;
+    rh->rex = new TRexpp();
+    rh->rex->Compile(regex.c_str());
+
+    mHandlerRexMap.insert(pair<string, RexHandler*>(regex, rh));
+    return rh;
+}
+
+// Add or get a keyboard handler for a given regular expression and handler pair
+RexHandler* EventDispatcher::addKeyboardHandler(string regex, KeyboardHandler* handler)
+{
+    ScopedMutex kMutex(kbHRMLock);
+
+    multimap<string, RexHandler*>::iterator it;
+    pair<multimap<string, RexHandler*>::iterator, multimap<string, RexHandler*>::iterator> ret;
+    ret = kHandlerRexMap.equal_range(regex);
+
+    // Check to see if we've already registered this handler for this regex
+    for (it = ret.first; it != ret.second; ++it)
+    {
+        if((*it).second->khandler == handler)
+            return (*it).second;
+    }
+
+    // No? Alright then register everything
+    RexHandler* rh = new RexHandler();
+    rh->khandler = handler;
+    rh->rex = new TRexpp();
+    rh->rex->Compile(regex.c_str());
+
+    kHandlerRexMap.insert(pair<string, RexHandler*>(regex, rh));
+    return rh;
+}
+
+// Clean up the mouse handler map
+void EventDispatcher::cleanupMouseHandlerMap()
+{
+    ScopedMutex mMutex(mdHRMLock);
+    multimap<string, RexHandler*>::iterator it;
+
+    for(it = mHandlerRexMap.begin(); it != mHandlerRexMap.end(); it++)
+    {
+        RexHandler* rex = (*it).second;
+        delete rex->rex;
+        delete rex;
+
+        mHandlerRexMap.erase(it);
+    }
+}
+
+// Clean up the mouse handler map
+void EventDispatcher::cleanupKeyboardHandlerMap()
+{
+    ScopedMutex kMutex(kbHRMLock);
+    multimap<string, RexHandler*>::iterator it;
+
+    for(it = kHandlerRexMap.begin(); it != kHandlerRexMap.end(); it++)
+    {
+        RexHandler* rex = (*it).second;
+        delete rex->rex;
+        delete rex;
+
+        kHandlerRexMap.erase(it);
+    }
+}
+
+// A new mouse device has been added
+void EventDispatcher::newMouseDevice(MouseInfo* info)
+{
+    ScopedMutex mMutex(mdHRMLock);
+    multimap<string, RexHandler*>::iterator it;
+
+    for(it = mHandlerRexMap.begin(); it != mHandlerRexMap.end(); it++)
+    {
+        RexHandler* rh = (*it).second;
+        if(rh->rex->Match(info->name.c_str()))
+        {
+            // OK, we've got a registered handler for this device.
+            // Update the map (i.e. handlerMap[info->device] = rh->mhandler);
+        }
+    }
+}
+
+// A new keyboard device has been added
+void EventDispatcher::newKeyboardDevice(KeyboardInfo* info)
+{
+    ScopedMutex kMutex(kbHRMLock);
+    multimap<string, RexHandler*>::iterator it;
+
+    for(it = kHandlerRexMap.begin(); it != kHandlerRexMap.end(); it++)
+    {
+        RexHandler* rh = (*it).second;
+        if(rh->rex->Match(info->name.c_str()))
+        {
+            // OK, we've got a registered handler for this device.
+            // Update the map (i.e. handlerMap[info->device] = rh->khandler);
+        }
+    }
 }
 
 // Scan the raw devices and fill in the device info structures
@@ -217,6 +344,8 @@ void EventDispatcher::scanDevices()
                                 kbi->device = rid.hDevice;
                                 kbi->name = devName;
                                 keyboardDevices[rid.hDevice] = kbi;
+
+                                newKeyboardDevice(kbi);
                             }
                         }
                         else if(rid.dwType == RIM_TYPEMOUSE)
@@ -228,6 +357,8 @@ void EventDispatcher::scanDevices()
                                 mi->device = rid.hDevice;
                                 mi->name = devName;
                                 mouseDevices[rid.hDevice] = mi;
+
+                                newMouseDevice(mi);
                             }
                         }
                     }

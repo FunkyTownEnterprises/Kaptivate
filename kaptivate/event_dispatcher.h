@@ -35,6 +35,8 @@
 #include <vector>
 #include <iostream>
 
+class TRexpp;
+
 namespace Kaptivate
 {
     class KeyboardEvent;
@@ -46,6 +48,16 @@ namespace Kaptivate
     struct KeyboardInfo;
     struct MouseInfo;
 
+    struct RexHandler
+    {
+        TRexpp* rex;
+        union
+        {
+            KeyboardHandler* khandler;
+            MouseHandler* mhandler;
+        };
+    };
+
     class EventDispatcher
     {
     private:
@@ -54,6 +66,22 @@ namespace Kaptivate
 
         std::map<HANDLE, KeyboardInfo*> keyboardDevices;
         std::map<HANDLE, MouseInfo*> mouseDevices;
+
+        HANDLE kbHRMLock;
+        HANDLE mdHRMLock;
+
+        std::multimap<std::string, RexHandler*> kHandlerRexMap;
+        std::multimap<std::string, RexHandler*> mHandlerRexMap;
+
+        RexHandler* addKeyboardHandler(std::string regex, KeyboardHandler* handler);
+        RexHandler* addMouseHandler(std::string regex, MouseHandler* handler);
+
+        void newKeyboardDevice(KeyboardInfo* info);
+        void newMouseDevice(MouseInfo* info);
+
+        void cleanupMouseHandlerMap();
+        void cleanupKeyboardHandlerMap();
+
         void scanDevices();
 
     public:

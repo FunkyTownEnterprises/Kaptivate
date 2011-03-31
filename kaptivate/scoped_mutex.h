@@ -37,8 +37,15 @@ namespace Kaptivate
     {
     private:
         HANDLE hMutex;
+        bool locked;
+
     public:
         ScopedMutex(HANDLE mutex);
         ~ScopedMutex();
+
+        void Lock();
+        void Unlock();
+
+        bool Locked();
     };
 }

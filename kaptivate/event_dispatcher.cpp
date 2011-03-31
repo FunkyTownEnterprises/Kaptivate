@@ -35,6 +35,9 @@
 #include "kaptivate_exceptions.h"
 #include "scoped_mutex.h"
 
+#include "trex/trex.h"
+#include "trex/TRexpp.h"
+
 #include <iostream>
 using namespace std;
 using namespace Kaptivate;

@@ -236,6 +236,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\trex\trex.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -272,6 +276,14 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\trex\trex.h"
+				>
+			</File>
+			<File
+				RelativePath=".\trex\TRexpp.h"
 				>
 			</File>
 		</Filter>

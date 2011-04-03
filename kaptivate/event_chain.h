@@ -35,7 +35,22 @@
 #include <vector>
 #include <iostream>
 
+#include "kaptivate.h"
+
 namespace Kaptivate
 {
-    
+    class KeyboardEventChain
+    {
+    public:
+        KeyboardEventChain();
+        ~KeyboardEventChain();
+
+        void clearHandlers();
+        void addHandler(KeyboardHandler* handler);
+        void removeHandler(KeyboardHandler* handler);
+        unsigned int chainSize();
+
+    private:
+        std::vector<KeyboardHandler*> handlers;
+    };
 }

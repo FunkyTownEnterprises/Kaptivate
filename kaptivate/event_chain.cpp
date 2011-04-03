@@ -35,3 +35,36 @@
 using namespace std;
 using namespace Kaptivate;
 
+KeyboardEventChain::KeyboardEventChain()
+{
+}
+
+KeyboardEventChain::~KeyboardEventChain()
+{
+}
+
+void KeyboardEventChain::clearHandlers()
+{
+    handlers.clear();
+}
+
+void KeyboardEventChain::addHandler(KeyboardHandler* handler)
+{
+    if(handler)
+        handlers.insert(handlers.begin(), handler);
+}
+
+void KeyboardEventChain::removeHandler(KeyboardHandler* handler)
+{
+    vector<KeyboardHandler*>::iterator it;
+    for(it = handlers.begin(); it != handlers.end(); it++)
+    {
+        if(*it == handler)
+            handlers.erase(it);
+    }
+}
+
+unsigned int KeyboardEventChain::chainSize()
+{
+    return (unsigned int)handlers.size();
+}

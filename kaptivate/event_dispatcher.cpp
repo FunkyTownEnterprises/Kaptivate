@@ -34,6 +34,7 @@
 #include "kaptivate.h"
 #include "kaptivate_exceptions.h"
 #include "scoped_mutex.h"
+#include "event_chain.h"
 
 #include "trex/trex.h"
 #include "trex/TRexpp.h"
@@ -264,6 +265,9 @@ void EventDispatcher::newKeyboardDevice(KeyboardInfo* info)
         {
             // OK, we've got a registered handler for this device.
             // Update the map (i.e. handlerMap[info->device] = rh->khandler);
+            if(kbdEventChains.count(info->device) == 0)
+                kbdEventChains[info->device] = new KeyboardEventChain();
+            kbdEventChains[info->device]->addHandler(rh->khandler);
         }
     }
 }

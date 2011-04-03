@@ -45,6 +45,7 @@ namespace Kaptivate
     class MouseMoveEvent;
     class KeyboardHandler;
     class MouseHandler;
+    class KeyboardEventChain;
     struct KeyboardInfo;
     struct MouseInfo;
 
@@ -66,6 +67,8 @@ namespace Kaptivate
 
         std::map<HANDLE, KeyboardInfo*> keyboardDevices;
         std::map<HANDLE, MouseInfo*> mouseDevices;
+
+        std::map<HANDLE, KeyboardEventChain*> kbdEventChains;
 
         HANDLE kbHRMLock;
         HANDLE mdHRMLock;

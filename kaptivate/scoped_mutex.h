@@ -33,19 +33,23 @@
 
 namespace Kaptivate
 {
-    class ScopedMutex
+    class ScopedLock
     {
     private:
         HANDLE hMutex;
-        bool locked;
 
     public:
-        ScopedMutex(HANDLE mutex);
-        ~ScopedMutex();
+        ScopedLock(HANDLE mutex);
+        ~ScopedLock();
+    };
 
-        void Lock();
-        void Unlock();
+    class ScopedUnlock
+    {
+    private:
+        HANDLE hMutex;
 
-        bool Locked();
+    public:
+        ScopedUnlock(HANDLE mutex);
+        ~ScopedUnlock();
     };
 }

@@ -91,7 +91,7 @@ vector<KeyboardInfo> EventDispatcher::enumerateKeyboards()
     scanDevices();
 
     {
-        ScopedMutex kMutex(kdLock);
+        ScopedLock kMutex(kdLock);
 
         map<HANDLE, KeyboardInfo*>::iterator it;
         for(it = keyboardDevices.begin() ; it != keyboardDevices.end(); it++)
@@ -113,7 +113,7 @@ vector<MouseInfo> EventDispatcher::enumerateMice()
     scanDevices();
 
     {
-        ScopedMutex mMutex(mdLock);
+        ScopedLock mMutex(mdLock);
 
         map<HANDLE, MouseInfo*>::iterator it;
         for(it = mouseDevices.begin() ; it != mouseDevices.end(); it++)
@@ -153,7 +153,7 @@ void EventDispatcher::unregisterMouseHandler(MouseHandler* handler)
 // Add or get a mouse handler for a given regular expression and handler pair
 RexHandler* EventDispatcher::addMouseHandler(std::string regex, MouseHandler* handler)
 {
-    ScopedMutex mMutex(mdHRMLock);
+    ScopedLock mMutex(mdHRMLock);
 
     multimap<string, RexHandler*>::iterator it;
     pair<multimap<string, RexHandler*>::iterator, multimap<string, RexHandler*>::iterator> ret;
@@ -179,7 +179,7 @@ RexHandler* EventDispatcher::addMouseHandler(std::string regex, MouseHandler* ha
 // Add or get a keyboard handler for a given regular expression and handler pair
 RexHandler* EventDispatcher::addKeyboardHandler(string regex, KeyboardHandler* handler)
 {
-    ScopedMutex kMutex(kbHRMLock);
+    ScopedLock kMutex(kbHRMLock);
 
     multimap<string, RexHandler*>::iterator it;
     pair<multimap<string, RexHandler*>::iterator, multimap<string, RexHandler*>::iterator> ret;
@@ -205,7 +205,7 @@ RexHandler* EventDispatcher::addKeyboardHandler(string regex, KeyboardHandler* h
 // Clean up the mouse handler map
 void EventDispatcher::cleanupMouseHandlerMap()
 {
-    ScopedMutex mMutex(mdHRMLock);
+    ScopedLock mMutex(mdHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = mHandlerRexMap.begin(); it != mHandlerRexMap.end(); it++)
@@ -221,7 +221,7 @@ void EventDispatcher::cleanupMouseHandlerMap()
 // Clean up the mouse handler map
 void EventDispatcher::cleanupKeyboardHandlerMap()
 {
-    ScopedMutex kMutex(kbHRMLock);
+    ScopedLock kMutex(kbHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = kHandlerRexMap.begin(); it != kHandlerRexMap.end(); it++)
@@ -237,7 +237,7 @@ void EventDispatcher::cleanupKeyboardHandlerMap()
 // A new mouse device has been added
 void EventDispatcher::newMouseDevice(MouseInfo* info)
 {
-    ScopedMutex mMutex(mdHRMLock);
+    ScopedLock mMutex(mdHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = mHandlerRexMap.begin(); it != mHandlerRexMap.end(); it++)
@@ -254,7 +254,7 @@ void EventDispatcher::newMouseDevice(MouseInfo* info)
 // A new keyboard device has been added
 void EventDispatcher::newKeyboardDevice(KeyboardInfo* info)
 {
-    ScopedMutex kMutex(kbHRMLock);
+    ScopedLock kMutex(kbHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = kHandlerRexMap.begin(); it != kHandlerRexMap.end(); it++)
@@ -293,8 +293,8 @@ void EventDispatcher::scanDevices()
     {
         // Begin lock
 
-        ScopedMutex kMutex(kdLock);
-        ScopedMutex mMutex(mdLock);
+        ScopedLock kMutex(kdLock);
+        ScopedLock mMutex(mdLock);
 
         {
             // Clear out the keyboardDevices map

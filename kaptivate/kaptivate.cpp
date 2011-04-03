@@ -110,7 +110,7 @@ KaptivateAPI::~KaptivateAPI()
 // Get an instance of this thing
 KaptivateAPI* KaptivateAPI::getInstance()
 {
-    ScopedMutex lock(kaptivateMutex);
+    ScopedLock lock(kaptivateMutex);
 
     try
     {
@@ -132,7 +132,7 @@ KaptivateAPI* KaptivateAPI::getInstance()
 // Destroy the singleton
 void KaptivateAPI::destroyInstance()
 {
-    ScopedMutex lock(kaptivateMutex);
+    ScopedLock lock(kaptivateMutex);
     if(singleton != NULL)
     {
         _localInstance = NULL;

@@ -1,5 +1,5 @@
 /*
- * event_dispatcher.h
+ * event_chain.h
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -29,34 +29,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "scoped_mutex.h"
-#include "kaptivate_exceptions.h"
+#pragma once
 
-using namespace Kaptivate;
+#include <map>
+#include <vector>
+#include <iostream>
 
-ScopedLock::ScopedLock(HANDLE mutex)
+namespace Kaptivate
 {
-    hMutex = mutex;
-    if(hMutex == 0 || WAIT_OBJECT_0 != WaitForSingleObject(hMutex, INFINITE))
-        throw KaptivateException("Unable to aquire the lock");
-}
-
-ScopedLock::~ScopedLock()
-{
-    if(!ReleaseMutex(hMutex))
-        throw KaptivateException("Unable to release the lock");
-}
-
-ScopedUnlock::ScopedUnlock(HANDLE mutex)
-{
-    hMutex = mutex;
-    if(hMutex == 0 || !ReleaseMutex(hMutex))
-        throw KaptivateException("Unable to release the lock");
-}
-
-ScopedUnlock::~ScopedUnlock()
-{
-    if(WAIT_OBJECT_0 != WaitForSingleObject(hMutex, INFINITE))
-        throw KaptivateException("Unable to aquire the lock");
+    
 }

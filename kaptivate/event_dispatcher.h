@@ -46,6 +46,7 @@ namespace Kaptivate
     class KeyboardHandler;
     class MouseHandler;
     class KeyboardEventChain;
+    class MouseEventChain;
     struct KeyboardInfo;
     struct MouseInfo;
 
@@ -64,11 +65,13 @@ namespace Kaptivate
     private:
         HANDLE kdLock;
         HANDLE mdLock;
-
         std::map<HANDLE, KeyboardInfo*> keyboardDevices;
         std::map<HANDLE, MouseInfo*> mouseDevices;
 
+        HANDLE kecLock;
+        HANDLE mecLock;
         std::map<HANDLE, KeyboardEventChain*> kbdEventChains;
+        std::map<HANDLE, MouseEventChain*> mouseEventChains;
 
         HANDLE kbHRMLock;
         HANDLE mdHRMLock;
@@ -76,14 +79,20 @@ namespace Kaptivate
         std::multimap<std::string, RexHandler*> kHandlerRexMap;
         std::multimap<std::string, RexHandler*> mHandlerRexMap;
 
-        RexHandler* addKeyboardHandler(std::string regex, KeyboardHandler* handler);
-        RexHandler* addMouseHandler(std::string regex, MouseHandler* handler);
+        RexHandler* getKeyboardHandler(std::string regex, KeyboardHandler* handler);
+        RexHandler* getMouseHandler(std::string regex, MouseHandler* handler);
 
         void newKeyboardDevice(KeyboardInfo* info);
         void newMouseDevice(MouseInfo* info);
+        void newKeyboardHandler(RexHandler* keHandler);
+        void newMouseHandler(RexHandler* meHandler);
 
         void cleanupMouseHandlerMap();
         void cleanupKeyboardHandlerMap();
+        void cleanupMouseEventChainMap();
+        void cleanupKeyboardEventChainMap();
+        void cleanupMouseDeviceMap();
+        void cleanupKeyboardDeviceMap();
 
         void scanDevices();
 

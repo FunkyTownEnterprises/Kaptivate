@@ -68,3 +68,39 @@ unsigned int KeyboardEventChain::chainSize()
 {
     return (unsigned int)handlers.size();
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+MouseEventChain::MouseEventChain()
+{
+}
+
+MouseEventChain::~MouseEventChain()
+{
+}
+
+void MouseEventChain::clearHandlers()
+{
+    handlers.clear();
+}
+
+void MouseEventChain::addHandler(MouseHandler* handler)
+{
+    if(handler)
+        handlers.insert(handlers.begin(), handler);
+}
+
+void MouseEventChain::removeHandler(MouseHandler* handler)
+{
+    vector<MouseHandler*>::iterator it;
+    for(it = handlers.begin(); it != handlers.end(); it++)
+    {
+        if(*it == handler)
+            handlers.erase(it);
+    }
+}
+
+unsigned int MouseEventChain::chainSize()
+{
+    return (unsigned int)handlers.size();
+}

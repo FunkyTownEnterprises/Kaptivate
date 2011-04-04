@@ -50,24 +50,31 @@ EventDispatcher::EventDispatcher()
     mdLock = CreateMutex(NULL, FALSE, NULL);
     kbHRMLock = CreateMutex(NULL, FALSE, NULL);
     mdHRMLock = CreateMutex(NULL, FALSE, NULL);
+    kecLock = CreateMutex(NULL, FALSE, NULL);
+    mecLock = CreateMutex(NULL, FALSE, NULL);
 }
 
 // Destructor
 EventDispatcher::~EventDispatcher()
 {
+    cleanupMouseHandlerMap();
+    cleanupKeyboardHandlerMap();
+    cleanupMouseEventChainMap();
+    cleanupKeyboardEventChainMap();
+    cleanupMouseDeviceMap();
+    cleanupKeyboardDeviceMap();
+
     CloseHandle(kdLock);
     CloseHandle(mdLock);
     CloseHandle(kbHRMLock);
     CloseHandle(mdHRMLock);
-
-    cleanupMouseHandlerMap();
-    cleanupKeyboardHandlerMap();
+    CloseHandle(kecLock);
+    CloseHandle(mecLock);
 }
 
 // Dispatch a keyboard event to any registered handlers
 void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
 {
-
 }
 
 // Dispatch a mouse button event to any registered handlers
@@ -132,27 +139,37 @@ vector<MouseInfo> EventDispatcher::enumerateMice()
 // Register a handler for keyboard events
 void EventDispatcher::registerKeyboardHandler(string idRegex, KeyboardHandler* handler)
 {
-    //addKeyboardHandler(idRegex, handler);
+    RexHandler* rex = getKeyboardHandler(idRegex, handler);
+    newKeyboardHandler(rex);
 }
 
 // Register a handler for mouse events
 void EventDispatcher::resgisterMouseHandler(string idRegex, MouseHandler* handler)
 {
-    //addMouseHandler(idRegex, handler);
+    RexHandler* rex = getMouseHandler(idRegex, handler);
+    newMouseHandler(rex);
 }
 
 // Unregister a handler for keyboard events
 void EventDispatcher::unregisterKeyboardHandler(KeyboardHandler* handler)
 {
+    ScopedLock kecMutex(kecLock);
+    map<HANDLE, KeyboardEventChain*>::iterator it;
+    for(it = kbdEventChains.begin(); it != kbdEventChains.end(); it++)
+        (*it).second->removeHandler(handler);
 }
 
 // Unregister a handler for mouse events
 void EventDispatcher::unregisterMouseHandler(MouseHandler* handler)
 {
+    ScopedLock mecMutex(mecLock);
+    map<HANDLE, MouseEventChain*>::iterator it;
+    for(it = mouseEventChains.begin(); it != mouseEventChains.end(); it++)
+        (*it).second->removeHandler(handler);
 }
 
 // Add or get a mouse handler for a given regular expression and handler pair
-RexHandler* EventDispatcher::addMouseHandler(std::string regex, MouseHandler* handler)
+RexHandler* EventDispatcher::getMouseHandler(std::string regex, MouseHandler* handler)
 {
     ScopedLock mMutex(mdHRMLock);
 
@@ -178,7 +195,7 @@ RexHandler* EventDispatcher::addMouseHandler(std::string regex, MouseHandler* ha
 }
 
 // Add or get a keyboard handler for a given regular expression and handler pair
-RexHandler* EventDispatcher::addKeyboardHandler(string regex, KeyboardHandler* handler)
+RexHandler* EventDispatcher::getKeyboardHandler(string regex, KeyboardHandler* handler)
 {
     ScopedLock kMutex(kbHRMLock);
 
@@ -214,9 +231,9 @@ void EventDispatcher::cleanupMouseHandlerMap()
         RexHandler* rex = (*it).second;
         delete rex->rex;
         delete rex;
-
-        mHandlerRexMap.erase(it);
     }
+
+    mHandlerRexMap.clear();
 }
 
 // Clean up the mouse handler map
@@ -230,9 +247,53 @@ void EventDispatcher::cleanupKeyboardHandlerMap()
         RexHandler* rex = (*it).second;
         delete rex->rex;
         delete rex;
-
-        kHandlerRexMap.erase(it);
     }
+
+    kHandlerRexMap.clear();
+}
+
+// Clean up the mouse event chain map
+void EventDispatcher::cleanupMouseEventChainMap()
+{
+    ScopedLock mMutex(mecLock);
+
+    map<HANDLE, MouseEventChain*>::iterator it;
+    for(it = mouseEventChains.begin(); it != mouseEventChains.end(); it++)
+        delete (*it).second;
+    mouseEventChains.clear();
+}
+
+// Clean up the keyboard event chain map
+void EventDispatcher::cleanupKeyboardEventChainMap()
+{
+    ScopedLock kMutex(kecLock);
+
+    map<HANDLE, KeyboardEventChain*>::iterator it;
+    for(it = kbdEventChains.begin(); it != kbdEventChains.end(); it++)
+        delete (*it).second;
+    kbdEventChains.clear();
+}
+
+// Clear out the mouse device info map
+void EventDispatcher::cleanupMouseDeviceMap()
+{
+    ScopedLock mMutex(mdLock);
+
+    map<HANDLE, MouseInfo*>::iterator it;
+    for(it = mouseDevices.begin(); it != mouseDevices.end(); it++)
+        delete (*it).second;
+    mouseDevices.clear();
+}
+
+// Clear out the keyboard device info map
+void EventDispatcher::cleanupKeyboardDeviceMap()
+{
+    ScopedLock kMutex(kdLock);
+
+    map<HANDLE, KeyboardInfo*>::iterator it;
+    for(it = keyboardDevices.begin() ; it != keyboardDevices.end(); it++)
+        delete (*it).second;
+    keyboardDevices.clear();
 }
 
 // A new mouse device has been added
@@ -247,7 +308,10 @@ void EventDispatcher::newMouseDevice(MouseInfo* info)
         if(rh->rex->Match(info->name.c_str()))
         {
             // OK, we've got a registered handler for this device.
-            // Update the map (i.e. handlerMap[info->device] = rh->mhandler);
+            ScopedLock mecMutex(mecLock);
+            if(mouseEventChains.count(info->device) == 0)
+                mouseEventChains[info->device] = new MouseEventChain();
+            mouseEventChains[info->device]->addHandler(rh->mhandler);
         }
     }
 }
@@ -264,10 +328,50 @@ void EventDispatcher::newKeyboardDevice(KeyboardInfo* info)
         if(rh->rex->Match(info->name.c_str()))
         {
             // OK, we've got a registered handler for this device.
-            // Update the map (i.e. handlerMap[info->device] = rh->khandler);
+            ScopedLock kecMutex(kecLock);
             if(kbdEventChains.count(info->device) == 0)
                 kbdEventChains[info->device] = new KeyboardEventChain();
             kbdEventChains[info->device]->addHandler(rh->khandler);
+        }
+    }
+}
+
+// A new keyboard event handler has been added
+void EventDispatcher::newKeyboardHandler(RexHandler* keHandler)
+{
+    ScopedLock kMutex(kdLock);
+
+    map<HANDLE, KeyboardInfo*>::iterator it;
+    for(it = keyboardDevices.begin(); it != keyboardDevices.end(); it++)
+    {
+        KeyboardInfo* info = (*it).second;
+        if(keHandler->rex->Match(info->name.c_str()))
+        {
+            // OK, our new handler can handle this device
+            ScopedLock kecMutex(kecLock);
+            if(kbdEventChains.count(info->device) == 0)
+                kbdEventChains[info->device] = new KeyboardEventChain();
+            kbdEventChains[info->device]->addHandler(keHandler->khandler);
+        }
+    }
+}
+
+// A new mouse event handler has been added
+void EventDispatcher::newMouseHandler(RexHandler* meHandler)
+{
+    ScopedLock mMutex(mdHRMLock);
+
+    map<HANDLE, MouseInfo*>::iterator it;
+    for(it = mouseDevices.begin(); it != mouseDevices.end(); it++)
+    {
+        MouseInfo* info = (*it).second;
+        if(meHandler->rex->Match(info->name.c_str()))
+        {
+            // OK, our new handler can handle this device
+            ScopedLock mecMutex(mecLock);
+            if(mouseEventChains.count(info->device) == 0)
+                mouseEventChains[info->device] = new MouseEventChain();
+            mouseEventChains[info->device]->addHandler(meHandler->mhandler);
         }
     }
 }
@@ -294,27 +398,17 @@ void EventDispatcher::scanDevices()
         }
     }
 
+    // We'll be rebuilding these
+    cleanupKeyboardEventChainMap();
+    cleanupMouseEventChainMap();
+    cleanupKeyboardDeviceMap();
+    cleanupMouseDeviceMap();
+
     {
         // Begin lock
 
         ScopedLock kMutex(kdLock);
         ScopedLock mMutex(mdLock);
-
-        {
-            // Clear out the keyboardDevices map
-            map<HANDLE, KeyboardInfo*>::iterator it;
-            for(it = keyboardDevices.begin() ; it != keyboardDevices.end(); it++)
-                delete (*it).second;
-            keyboardDevices.clear();
-        }
-
-        {
-            // Clear out the mouseDevices map
-            map<HANDLE, MouseInfo*>::iterator it;
-            for(it = mouseDevices.begin() ; it != mouseDevices.end(); it++)
-                delete (*it).second;
-            mouseDevices.clear();
-        }
 
         // Iterate over the raw devices
         for(UINT i = 0; i < nDevices; i++)

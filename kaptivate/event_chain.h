@@ -53,4 +53,19 @@ namespace Kaptivate
     private:
         std::vector<KeyboardHandler*> handlers;
     };
+
+    class MouseEventChain
+    {
+    public:
+        MouseEventChain();
+        ~MouseEventChain();
+
+        void clearHandlers();
+        void addHandler(MouseHandler* handler);
+        void removeHandler(MouseHandler* handler);
+        unsigned int chainSize();
+
+    private:
+        std::vector<MouseHandler*> handlers;
+    };
 }

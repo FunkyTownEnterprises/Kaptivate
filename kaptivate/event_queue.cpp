@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "event_queue.h"
+#include "stdafx.hpp"
+#include "event_queue.hpp"
 
 using namespace Kaptivate;
 

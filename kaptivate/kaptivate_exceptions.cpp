@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "kaptivate_exceptions.h"
+#include "stdafx.hpp"
+#include "kaptivate_exceptions.hpp"
 
 using namespace std;
 using namespace Kaptivate;

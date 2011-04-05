@@ -40,16 +40,17 @@
  *    2. There is NO GUARANTEED ORDER for which API will generate an event first
  */
 
-#include "stdafx.h"
-#include "kaptivate.h"
-#include "kaptivate_exceptions.h"
-#include "hooks.h"
-#include "event_dispatcher.h"
-#include "event_queue.h"
-#include "scoped_mutex.h"
+#include "stdafx.hpp"
+#include "kaptivate.hpp"
+#include "kaptivate_exceptions.hpp"
+#include "hooks.hpp"
+#include "event_dispatcher.hpp"
+#include "event_queue.hpp"
+#include "scoped_mutex.hpp"
 
 #include <iostream>
 #include <assert.h>
+
 using namespace std;
 using namespace Kaptivate;
 

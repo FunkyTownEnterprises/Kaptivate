@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "kaptivate.h"
+#include "stdafx.hpp"
+#include "kaptivate.hpp"
 
 // Needed for global hooks
 HMODULE kaptivateDllModule = 0;

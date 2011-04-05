@@ -1,5 +1,5 @@
 /*
- * event_chain.h
+ * sample_app.h
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -31,41 +31,4 @@
 
 #pragma once
 
-#include <map>
-#include <vector>
-#include <iostream>
-
-#include "kaptivate.h"
-
-namespace Kaptivate
-{
-    class KeyboardEventChain
-    {
-    public:
-        KeyboardEventChain();
-        ~KeyboardEventChain();
-
-        void clearHandlers();
-        void addHandler(KeyboardHandler* handler);
-        void removeHandler(KeyboardHandler* handler);
-        unsigned int chainSize();
-
-    private:
-        std::vector<KeyboardHandler*> handlers;
-    };
-
-    class MouseEventChain
-    {
-    public:
-        MouseEventChain();
-        ~MouseEventChain();
-
-        void clearHandlers();
-        void addHandler(MouseHandler* handler);
-        void removeHandler(MouseHandler* handler);
-        unsigned int chainSize();
-
-    private:
-        std::vector<MouseHandler*> handlers;
-    };
-}
+#include "resource.hpp"

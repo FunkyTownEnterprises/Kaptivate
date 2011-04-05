@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "event_chain.h"
+#include "stdafx.hpp"
+#include "event_chain.hpp"
 
 using namespace std;
 using namespace Kaptivate;

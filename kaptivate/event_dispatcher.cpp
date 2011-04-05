@@ -29,15 +29,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "event_dispatcher.h"
-#include "kaptivate.h"
-#include "kaptivate_exceptions.h"
-#include "scoped_mutex.h"
-#include "event_chain.h"
+#include "stdafx.hpp"
+#include "event_dispatcher.hpp"
+#include "kaptivate.hpp"
+#include "kaptivate_exceptions.hpp"
+#include "scoped_mutex.hpp"
+#include "event_chain.hpp"
 
-#include "trex/trex.h"
-#include "trex/TRexpp.h"
+#include "trex/trex.hpp"
+#include "trex/TRexpp.hpp"
 
 #include <iostream>
 using namespace std;

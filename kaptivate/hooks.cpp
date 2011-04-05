@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "hooks.h"
+#include "stdafx.hpp"
+#include "hooks.hpp"
 
 #include <windows.h>
 #include <stdio.h>

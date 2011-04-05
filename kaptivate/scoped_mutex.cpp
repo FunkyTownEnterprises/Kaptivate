@@ -29,9 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "scoped_mutex.h"
-#include "kaptivate_exceptions.h"
+#include "stdafx.hpp"
+#include "scoped_mutex.hpp"
+#include "kaptivate_exceptions.hpp"
 
 using namespace Kaptivate;
 

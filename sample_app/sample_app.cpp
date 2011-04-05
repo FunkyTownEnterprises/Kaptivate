@@ -29,11 +29,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "stdafx.h"
-#include "sample_app.h"
+#include "stdafx.hpp"
+#include "sample_app.hpp"
 
-#include "kaptivate.h"
-#include "kaptivate_exceptions.h"
+#include "kaptivate.hpp"
+#include "kaptivate_exceptions.hpp"
 
 #define MAX_LOADSTRING 100
 

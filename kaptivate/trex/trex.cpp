@@ -1,11 +1,12 @@
 /* see copyright notice in trex.h */
-#include "stdafx.h"
+#include "stdafx.hpp"
 
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <setjmp.h>
-#include "trex.h"
+
+#include "trex.hpp"
 
 //#ifdef _UINCODE
 //#define scisprint iswprint

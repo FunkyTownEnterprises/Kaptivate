@@ -46,6 +46,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="stdafx.hpp"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -251,47 +252,47 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\event_chain.h"
+				RelativePath=".\event_chain.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\event_dispatcher.h"
+				RelativePath=".\event_dispatcher.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\event_queue.h"
+				RelativePath=".\event_queue.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\hooks.h"
+				RelativePath=".\hooks.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\kaptivate.h"
+				RelativePath=".\kaptivate.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\kaptivate_exceptions.h"
+				RelativePath=".\kaptivate_exceptions.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\scoped_mutex.h"
+				RelativePath=".\scoped_mutex.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\stdafx.h"
+				RelativePath=".\stdafx.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\targetver.h"
+				RelativePath=".\targetver.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\trex\trex.h"
+				RelativePath=".\trex\trex.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\trex\TRexpp.h"
+				RelativePath=".\trex\TRexpp.hpp"
 				>
 			</File>
 		</Filter>

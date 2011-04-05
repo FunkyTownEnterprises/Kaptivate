@@ -1,5 +1,5 @@
 /*
- * stdafx.h
+ * event_chain.h
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -29,24 +29,43 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// stdafx.h : include file for standard system include files,
-// or project specific include files that are used frequently, but
-// are changed infrequently
-//
-
 #pragma once
 
-#include "targetver.h"
+#include <map>
+#include <vector>
+#include <iostream>
 
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-// Windows Header Files:
-#include <windows.h>
+#include "kaptivate.hpp"
 
-// C RunTime Header Files
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
+namespace Kaptivate
+{
+    class KeyboardEventChain
+    {
+    public:
+        KeyboardEventChain();
+        ~KeyboardEventChain();
 
+        void clearHandlers();
+        void addHandler(KeyboardHandler* handler);
+        void removeHandler(KeyboardHandler* handler);
+        unsigned int chainSize();
 
-// TODO: reference additional headers your program requires here
+    private:
+        std::vector<KeyboardHandler*> handlers;
+    };
+
+    class MouseEventChain
+    {
+    public:
+        MouseEventChain();
+        ~MouseEventChain();
+
+        void clearHandlers();
+        void addHandler(MouseHandler* handler);
+        void removeHandler(MouseHandler* handler);
+        unsigned int chainSize();
+
+    private:
+        std::vector<MouseHandler*> handlers;
+    };
+}

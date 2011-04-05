@@ -47,6 +47,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="stdafx.hpp"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -203,19 +204,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\resource.h"
+				RelativePath=".\resource.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\sample_app.h"
+				RelativePath=".\sample_app.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\stdafx.h"
+				RelativePath=".\stdafx.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\targetver.h"
+				RelativePath=".\targetver.hpp"
 				>
 			</File>
 		</Filter>

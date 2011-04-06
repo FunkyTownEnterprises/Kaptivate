@@ -50,6 +50,8 @@ namespace Kaptivate
         void removeHandler(KeyboardHandler* handler);
         unsigned int chainSize();
 
+        void runKeyboardEventChain(KeyboardEvent& evt);
+
     private:
         std::vector<KeyboardHandler*> handlers;
     };
@@ -64,6 +66,10 @@ namespace Kaptivate
         void addHandler(MouseHandler* handler);
         void removeHandler(MouseHandler* handler);
         unsigned int chainSize();
+
+        void runMouseButtonEventChain(MouseButtonEvent& evt);
+        void runMouseWheelEventChain(MouseWheelEvent& evt);
+        void runMouseMoveEventChain(MouseMoveEvent& evt);
 
     private:
         std::vector<MouseHandler*> handlers;

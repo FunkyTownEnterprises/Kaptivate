@@ -674,6 +674,7 @@ void KaptivateAPI::unregisterMouseHandler(MouseHandler* handler)
 KeyboardEvent::KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scanCode,
                              unsigned int wmMessage, bool keyUp)
 {
+    this->decision = UNDECIDED;
     this->device = device;
     this->vkey = vkey;
     this->scanCode = scanCode;
@@ -716,6 +717,72 @@ Decision KeyboardEvent::getDecision() const
 }
 
 void KeyboardEvent::setDecision(Decision decision)
+{
+    this->decision = decision;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Mouse Button Event
+
+MouseButtonEvent::MouseButtonEvent()
+{
+    this->decision = UNDECIDED;
+}
+
+MouseButtonEvent::~MouseButtonEvent()
+{
+}
+
+Decision MouseButtonEvent::getDecision() const
+{
+    return decision;
+}
+
+void MouseButtonEvent::setDecision(Decision decision)
+{
+    this->decision = decision;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Mouse Wheel Event
+
+MouseWheelEvent::MouseWheelEvent()
+{
+    this->decision = UNDECIDED;
+}
+
+MouseWheelEvent::~MouseWheelEvent()
+{
+}
+
+Decision MouseWheelEvent::getDecision() const
+{
+    return decision;
+}
+
+void MouseWheelEvent::setDecision(Decision decision)
+{
+    this->decision = decision;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Mouse Move Event
+
+MouseMoveEvent::MouseMoveEvent()
+{
+    this->decision = UNDECIDED;
+}
+
+MouseMoveEvent::~MouseMoveEvent()
+{
+}
+
+Decision MouseMoveEvent::getDecision() const
+{
+    return decision;
+}
+
+void MouseMoveEvent::setDecision(Decision decision)
 {
     this->decision = decision;
 }

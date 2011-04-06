@@ -69,6 +69,30 @@ unsigned int KeyboardEventChain::chainSize()
     return (unsigned int)handlers.size();
 }
 
+void KeyboardEventChain::runKeyboardEventChain(KeyboardEvent& evt)
+{
+    vector<KeyboardHandler*>::iterator it;
+    for(it = handlers.begin(); it != handlers.end(); it++)
+    {
+        try
+        {
+            (*it)->HandleKeyEvent(evt);
+            Decision dec = evt.getDecision();
+            if(dec == PERMIT || dec == CONSUME)
+                break;
+            else if(dec == PASS)
+                evt.setDecision(UNDECIDED);
+        }
+        catch(...)
+        {
+            // Normally I'm against this kind of behavior (catching everything).
+            // However if something stupid happens, it shouldn't interrupt ALL keyboard
+            // and / or mouse traffic just because of it.
+            evt.setDecision(UNDECIDED);
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 MouseEventChain::MouseEventChain()
@@ -103,4 +127,76 @@ void MouseEventChain::removeHandler(MouseHandler* handler)
 unsigned int MouseEventChain::chainSize()
 {
     return (unsigned int)handlers.size();
+}
+
+void MouseEventChain::runMouseButtonEventChain(MouseButtonEvent& evt)
+{
+    vector<MouseHandler*>::iterator it;
+    for(it = handlers.begin(); it != handlers.end(); it++)
+    {
+        try
+        {
+            (*it)->HandleButtonEvent(evt);
+            Decision dec = evt.getDecision();
+            if(dec == PERMIT || dec == CONSUME)
+                break;
+            else if(dec == PASS)
+                evt.setDecision(UNDECIDED);
+        }
+        catch(...)
+        {
+            // Normally I'm against this kind of behavior (catching everything).
+            // However if something stupid happens, it shouldn't interrupt ALL keyboard
+            // and / or mouse traffic just because of it.
+            evt.setDecision(UNDECIDED);
+        }
+    }
+}
+
+void MouseEventChain::runMouseWheelEventChain(MouseWheelEvent& evt)
+{
+    vector<MouseHandler*>::iterator it;
+    for(it = handlers.begin(); it != handlers.end(); it++)
+    {
+        try
+        {
+            (*it)->HandleWheelEvent(evt);
+            Decision dec = evt.getDecision();
+            if(dec == PERMIT || dec == CONSUME)
+                break;
+            else if(dec == PASS)
+                evt.setDecision(UNDECIDED);
+        }
+        catch(...)
+        {
+            // Normally I'm against this kind of behavior (catching everything).
+            // However if something stupid happens, it shouldn't interrupt ALL keyboard
+            // and / or mouse traffic just because of it.
+            evt.setDecision(UNDECIDED);
+        }
+    }
+}
+
+void MouseEventChain::runMouseMoveEventChain(MouseMoveEvent& evt)
+{
+    vector<MouseHandler*>::iterator it;
+    for(it = handlers.begin(); it != handlers.end(); it++)
+    {
+        try
+        {
+            (*it)->HandleMoveEvent(evt);
+            Decision dec = evt.getDecision();
+            if(dec == PERMIT || dec == CONSUME)
+                break;
+            else if(dec == PASS)
+                evt.setDecision(UNDECIDED);
+        }
+        catch(...)
+        {
+            // Normally I'm against this kind of behavior (catching everything).
+            // However if something stupid happens, it shouldn't interrupt ALL keyboard
+            // and / or mouse traffic just because of it.
+            evt.setDecision(UNDECIDED);
+        }
+    }
 }

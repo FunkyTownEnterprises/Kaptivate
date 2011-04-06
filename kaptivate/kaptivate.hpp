@@ -46,10 +46,10 @@ namespace Kaptivate
     // What should be done with a particular event?
     enum Decision
     {
-        UNDECIDED = 0,
-        PERMIT = 1,
-        CONSUME = 2,
-        PASS = 3
+        UNDECIDED = 1,
+        PERMIT = 2,
+        CONSUME = 4,
+        PASS = 8
     };
 
     // Information about a particular keyboard
@@ -101,25 +101,43 @@ namespace Kaptivate
     // Describes a mouse button event
     class KAPTIVATE_API MouseButtonEvent
     {
+    private:
+        Decision decision;
+
     public:
         MouseButtonEvent();
         ~MouseButtonEvent();
+
+        Decision getDecision() const;
+        void setDecision(Decision decision);
     };
 
     // Describes a mouse wheel event
     class KAPTIVATE_API MouseWheelEvent
     {
+    private:
+        Decision decision;
+
     public:
         MouseWheelEvent();
         ~MouseWheelEvent();
+
+        Decision getDecision() const;
+        void setDecision(Decision decision);
     };
 
     // Describes a mouse move event
     class KAPTIVATE_API MouseMoveEvent
     {
+    private:
+        Decision decision;
+
     public:
         MouseMoveEvent();
         ~MouseMoveEvent();
+
+        Decision getDecision() const;
+        void setDecision(Decision decision);
     };
 
     // An interface for a mouse event handler

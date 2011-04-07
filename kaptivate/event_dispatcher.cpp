@@ -75,6 +75,29 @@ EventDispatcher::~EventDispatcher()
 // Dispatch a keyboard event to any registered handlers
 void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
 {
+    HANDLE dev = evt.getDeviceHandle();
+
+    {
+        // Set the device name if it's available
+        ScopedLock kMutex(kdLock);
+        if(keyboardDevices.count(dev) > 0)
+        {
+            evt.setDeviceName(keyboardDevices[dev]->name);
+        }
+        else
+        {
+            // It's a "new" device, treat it as such.
+            // TODO: Call GetRawInputDeviceInfo
+        }
+    }
+
+    {
+        // Run the chain, let someone make a decision about this event
+        ScopedLock kecMutex(kecLock);
+        if(kbdEventChains.count(dev) > 0)
+            kbdEventChains[dev]->runKeyboardEventChain(evt);
+    }
+
 }
 
 // Dispatch a mouse button event to any registered handlers

@@ -63,7 +63,11 @@ namespace Kaptivate
     class KAPTIVATE_API KeyboardEvent
     {
     private:
-        HANDLE device;
+        HANDLE deviceHandle;
+
+        bool nameSet;
+        std::string deviceName;
+
         unsigned int vkey;
         unsigned int scanCode;
         unsigned int wmMessage;
@@ -75,6 +79,9 @@ namespace Kaptivate
         ~KeyboardEvent();
 
         HANDLE getDeviceHandle() const;
+        std::string getDeviceName() const;
+        void setDeviceName(std::string name);
+
         unsigned int getVkey() const;
         unsigned int getScanCode() const;
         unsigned int getWindowMessage() const;

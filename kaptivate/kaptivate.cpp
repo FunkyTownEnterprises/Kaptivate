@@ -675,11 +675,13 @@ KeyboardEvent::KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scan
                              unsigned int wmMessage, bool keyUp)
 {
     this->decision = UNDECIDED;
-    this->device = device;
+    this->deviceHandle = device;
     this->vkey = vkey;
     this->scanCode = scanCode;
     this->wmMessage = wmMessage;
     this->keyUp = keyUp;
+    this->nameSet = false;
+    this->deviceName = "UNKNOWN";
 }
 
 KeyboardEvent::~KeyboardEvent()
@@ -688,7 +690,21 @@ KeyboardEvent::~KeyboardEvent()
 
 HANDLE KeyboardEvent::getDeviceHandle() const
 {
-    return device;
+    return deviceHandle;
+}
+
+string KeyboardEvent::getDeviceName() const
+{
+    return this->deviceName;
+}
+
+void KeyboardEvent::setDeviceName(std::string name)
+{
+   if(!nameSet)
+   {
+       this->deviceName = name;
+       nameSet = true;
+   }
 }
 
 unsigned int KeyboardEvent::getVkey() const

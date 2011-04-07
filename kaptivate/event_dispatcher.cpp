@@ -78,24 +78,36 @@ void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
     HANDLE dev = evt.getDeviceHandle();
 
     {
-        // Set the device name if it's available
+        // Set the device info if it's available
         ScopedLock kMutex(kdLock);
         if(keyboardDevices.count(dev) > 0)
         {
-            evt.setDeviceName(keyboardDevices[dev]->name);
+            evt.setDeviceInfo(keyboardDevices[dev]);
         }
         else
         {
-            // It's a "new" device, treat it as such.
-            // TODO: Call GetRawInputDeviceInfo
+            // It's an unknown device, let's see what we can find out about it.
+            ScopedUnlock unlock(kdLock);
+            KeyboardInfo *kbd = unknownKeyboardDevice(dev);
+            if(kbd)
+            {
+                evt.setDeviceInfo(kbd);
+            }
         }
     }
 
     {
         // Run the chain, let someone make a decision about this event
         ScopedLock kecMutex(kecLock);
-        if(kbdEventChains.count(dev) > 0)
+        if(kbdEventChains.count(dev) > 0 && kbdEventChains[dev]->chainSize() > 0)
+        {
+            // We've got a real handler, give it to them (and hard)
             kbdEventChains[dev]->runKeyboardEventChain(evt);
+        }
+        else
+        {
+            // Ain't nobody here. Do something?
+        }
     }
 
 }
@@ -103,16 +115,121 @@ void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
 // Dispatch a mouse button event to any registered handlers
 void EventDispatcher::handleMouseButton(MouseButtonEvent& evt)
 {
+    HANDLE dev = evt.getDeviceHandle();
+
+    {
+        // Set the device info if it's available
+        ScopedLock mMutex(mdLock);
+        if(mouseDevices.count(dev) > 0)
+        {
+            evt.setDeviceInfo(mouseDevices[dev]);
+        }
+        else
+        {
+            // It's an unknown device, let's see what we can find out about it.
+            ScopedUnlock unlock(mdLock);
+            MouseInfo *mi = unknownMouseDevice(dev);
+            if(mi)
+            {
+                evt.setDeviceInfo(mi);
+            }
+        }
+    }
+
+    {
+        // Run the chain, let someone make a decision about this event
+        ScopedLock mecMutex(mecLock);
+        if(mouseEventChains.count(dev) > 0 && mouseEventChains[dev]->chainSize() > 0)
+        {
+            // You like me! You really, really like me!
+            mouseEventChains[dev]->runMouseButtonEventChain(evt);
+        }
+        else
+        {
+            // Zero is the REAL lonliest number. It's the lonliest number
+            // since the number one.
+        }
+    }
 }
 
 // Dispatch a mouse wheel event to any registered handlers
 void EventDispatcher::handleMouseWheel(MouseWheelEvent& evt)
 {
+    HANDLE dev = evt.getDeviceHandle();
+
+    {
+        // Set the device name if it's available
+        ScopedLock mMutex(mdLock);
+        if(mouseDevices.count(dev) > 0)
+        {
+            evt.setDeviceInfo(mouseDevices[dev]);
+        }
+        else
+        {
+            // It's an unknown device, let's see what we can find out about it.
+            ScopedUnlock unlock(mdLock);
+            MouseInfo *mi = unknownMouseDevice(dev);
+            if(mi)
+            {
+                evt.setDeviceInfo(mi);
+            }
+        }
+    }
+
+    {
+        // Run the chain, let someone make a decision about this event
+        ScopedLock mecMutex(mecLock);
+        if(mouseEventChains.count(dev) > 0 && mouseEventChains[dev]->chainSize() > 0)
+        {
+            // You like me! You really, really like me!
+            mouseEventChains[dev]->runMouseWheelEventChain(evt);
+        }
+        else
+        {
+            // Zero is the REAL lonliest number. It's the lonliest number
+            // since the number one.
+        }
+    }
 }
 
 // Dispatch a mouse move event to any registered handlers
 void EventDispatcher::handleMouseMove(MouseMoveEvent& evt)
 {
+    HANDLE dev = evt.getDeviceHandle();
+
+    {
+        // Set the device name if it's available
+        ScopedLock mMutex(mdLock);
+        if(mouseDevices.count(dev) > 0)
+        {
+            evt.setDeviceInfo(mouseDevices[dev]);
+        }
+        else
+        {
+            // It's an unknown device, let's see what we can find out about it.
+            ScopedUnlock unlock(mdLock);
+            MouseInfo *mi = unknownMouseDevice(dev);
+            if(mi)
+            {
+                evt.setDeviceInfo(mi);
+            }
+        }
+    }
+
+    {
+        // Run the chain, let someone make a decision about this event
+        ScopedLock mecMutex(mecLock);
+        if(mouseEventChains.count(dev) > 0 && mouseEventChains[dev]->chainSize() > 0)
+        {
+            // You like me! You really, really like me!
+            mouseEventChains[dev]->runMouseMoveEventChain(evt);
+        }
+        else
+        {
+            // Zero is the REAL lonliest number. It's the lonliest number
+            // since the number one.
+        }
+    }
 }
 
 // Get a list of attached keyboards
@@ -397,6 +514,22 @@ void EventDispatcher::newMouseHandler(RexHandler* meHandler)
             mouseEventChains[info->device]->addHandler(meHandler->mhandler);
         }
     }
+}
+
+// An unknown keyboard device has been encountered. Find out more about it.
+KeyboardInfo* EventDispatcher::unknownKeyboardDevice(HANDLE device)
+{
+    // TODO: Find out more about this new device
+
+    return NULL;
+}
+
+// An unknown mouse device has been encountered. Find out more about it.
+MouseInfo* EventDispatcher::unknownMouseDevice(HANDLE device)
+{
+    // TODO: Find out more about this new device
+
+    return NULL;
 }
 
 // Scan the raw devices and fill in the device info structures

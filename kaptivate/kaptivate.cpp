@@ -680,8 +680,7 @@ KeyboardEvent::KeyboardEvent(HANDLE device, unsigned int vkey, unsigned int scan
     this->scanCode = scanCode;
     this->wmMessage = wmMessage;
     this->keyUp = keyUp;
-    this->nameSet = false;
-    this->deviceName = "UNKNOWN";
+    this->info = NULL;
 }
 
 KeyboardEvent::~KeyboardEvent()
@@ -690,25 +689,25 @@ KeyboardEvent::~KeyboardEvent()
 
 HANDLE KeyboardEvent::getDeviceHandle() const
 {
-    return deviceHandle;
+    return this->deviceHandle;
 }
 
-string KeyboardEvent::getDeviceName() const
+KeyboardInfo* KeyboardEvent::getDeviceInfo() const
 {
-    return this->deviceName;
+    return this->info;
 }
 
-void KeyboardEvent::setDeviceName(std::string name)
+void KeyboardEvent::setDeviceInfo(KeyboardInfo* kbdInfo)
 {
-   if(!nameSet)
-   {
-       this->deviceName = name;
-       nameSet = true;
-   }
+    if(!this->info)
+    {
+        this->info = kbdInfo;
+    }
 }
 
 unsigned int KeyboardEvent::getVkey() const
 {
+
     return vkey;
 }
 
@@ -740,13 +739,33 @@ void KeyboardEvent::setDecision(Decision decision)
 ////////////////////////////////////////////////////////////////////////////////
 // Mouse Button Event
 
-MouseButtonEvent::MouseButtonEvent()
+MouseButtonEvent::MouseButtonEvent(HANDLE device)
 {
     this->decision = UNDECIDED;
+    this->deviceHandle = device;
+    this->info = NULL;
 }
 
 MouseButtonEvent::~MouseButtonEvent()
 {
+}
+
+HANDLE MouseButtonEvent::getDeviceHandle() const
+{
+    return this->deviceHandle;
+}
+
+MouseInfo* MouseButtonEvent::getDeviceInfo() const
+{
+    return this->info;
+}
+
+void MouseButtonEvent::setDeviceInfo(MouseInfo* mouseInfo)
+{
+    if(!this->info)
+    {
+        this->info = mouseInfo;
+    }
 }
 
 Decision MouseButtonEvent::getDecision() const
@@ -762,13 +781,33 @@ void MouseButtonEvent::setDecision(Decision decision)
 ////////////////////////////////////////////////////////////////////////////////
 // Mouse Wheel Event
 
-MouseWheelEvent::MouseWheelEvent()
+MouseWheelEvent::MouseWheelEvent(HANDLE device)
 {
     this->decision = UNDECIDED;
+    this->deviceHandle = device;
+    this->info = NULL;
 }
 
 MouseWheelEvent::~MouseWheelEvent()
 {
+}
+
+HANDLE MouseWheelEvent::getDeviceHandle() const
+{
+    return this->deviceHandle;
+}
+
+MouseInfo* MouseWheelEvent::getDeviceInfo() const
+{
+    return this->info;
+}
+
+void MouseWheelEvent::setDeviceInfo(MouseInfo* mouseInfo)
+{
+    if(!this->info)
+    {
+        this->info = mouseInfo;
+    }
 }
 
 Decision MouseWheelEvent::getDecision() const
@@ -784,13 +823,33 @@ void MouseWheelEvent::setDecision(Decision decision)
 ////////////////////////////////////////////////////////////////////////////////
 // Mouse Move Event
 
-MouseMoveEvent::MouseMoveEvent()
+MouseMoveEvent::MouseMoveEvent(HANDLE device)
 {
     this->decision = UNDECIDED;
+    this->deviceHandle = device;
+    this->info = NULL;
 }
 
 MouseMoveEvent::~MouseMoveEvent()
 {
+}
+
+HANDLE MouseMoveEvent::getDeviceHandle() const
+{
+    return this->deviceHandle;
+}
+
+MouseInfo* MouseMoveEvent::getDeviceInfo() const
+{
+    return this->info;
+}
+
+void MouseMoveEvent::setDeviceInfo(MouseInfo* mouseInfo)
+{
+    if(!this->info)
+    {
+        this->info = mouseInfo;
+    }
 }
 
 Decision MouseMoveEvent::getDecision() const

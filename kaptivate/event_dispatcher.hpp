@@ -82,6 +82,9 @@ namespace Kaptivate
         RexHandler* getKeyboardHandler(std::string regex, KeyboardHandler* handler);
         RexHandler* getMouseHandler(std::string regex, MouseHandler* handler);
 
+        KeyboardInfo* unknownKeyboardDevice(HANDLE device);
+        MouseInfo* unknownMouseDevice(HANDLE device);
+
         void newKeyboardDevice(KeyboardInfo* info);
         void newMouseDevice(MouseInfo* info);
         void newKeyboardHandler(RexHandler* keHandler);

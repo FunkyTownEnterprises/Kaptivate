@@ -64,9 +64,7 @@ namespace Kaptivate
     {
     private:
         HANDLE deviceHandle;
-
-        bool nameSet;
-        std::string deviceName;
+        KeyboardInfo* info;
 
         unsigned int vkey;
         unsigned int scanCode;
@@ -79,8 +77,8 @@ namespace Kaptivate
         ~KeyboardEvent();
 
         HANDLE getDeviceHandle() const;
-        std::string getDeviceName() const;
-        void setDeviceName(std::string name);
+        KeyboardInfo* getDeviceInfo() const;
+        void setDeviceInfo(KeyboardInfo* kbdInfo);
 
         unsigned int getVkey() const;
         unsigned int getScanCode() const;
@@ -109,11 +107,17 @@ namespace Kaptivate
     class KAPTIVATE_API MouseButtonEvent
     {
     private:
+        HANDLE deviceHandle;
+        MouseInfo* info;
         Decision decision;
 
     public:
-        MouseButtonEvent();
+        MouseButtonEvent(HANDLE device);
         ~MouseButtonEvent();
+
+        HANDLE getDeviceHandle() const;
+        MouseInfo* getDeviceInfo() const;
+        void setDeviceInfo(MouseInfo* mouseInfo);
 
         Decision getDecision() const;
         void setDecision(Decision decision);
@@ -123,11 +127,17 @@ namespace Kaptivate
     class KAPTIVATE_API MouseWheelEvent
     {
     private:
+        HANDLE deviceHandle;
+        MouseInfo* info;
         Decision decision;
 
     public:
-        MouseWheelEvent();
+        MouseWheelEvent(HANDLE device);
         ~MouseWheelEvent();
+
+        HANDLE getDeviceHandle() const;
+        MouseInfo* getDeviceInfo() const;
+        void setDeviceInfo(MouseInfo* mouseInfo);
 
         Decision getDecision() const;
         void setDecision(Decision decision);
@@ -137,11 +147,17 @@ namespace Kaptivate
     class KAPTIVATE_API MouseMoveEvent
     {
     private:
+        HANDLE deviceHandle;
+        MouseInfo* info;
         Decision decision;
 
     public:
-        MouseMoveEvent();
+        MouseMoveEvent(HANDLE device);
         ~MouseMoveEvent();
+
+        HANDLE getDeviceHandle() const;
+        MouseInfo* getDeviceInfo() const;
+        void setDeviceInfo(MouseInfo* mouseInfo);
 
         Decision getDecision() const;
         void setDecision(Decision decision);

@@ -183,6 +183,7 @@ namespace Kaptivate
 
         // Private singleton methods
         KaptivateAPI();
+        ~KaptivateAPI();
         static bool instanceFlag;
         static KaptivateAPI *singleton;
 
@@ -226,8 +227,10 @@ namespace Kaptivate
 
     public:
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Kaptivate singleton methods
+
         // Public singleton methods
-        ~KaptivateAPI();
         static KaptivateAPI* getInstance();
         static void destroyInstance();
 

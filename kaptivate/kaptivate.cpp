@@ -164,9 +164,9 @@ void KaptivateAPI::ProcessRawKeyboardInput(RAWINPUT* raw)
     events->EnqueueKeyboardEvent(kev);
 }
 
-// We're being asked to interpret a keyboard hook event. Wait for the raw keyboard event,
-// and ask the user what to do with it. Make a decision, and return it to the hook so that
-// it can prevent other apps from recieving the event (if so desired).
+// We're being asked to interpret a keyboard hook event. Wait for the raw keyboard event, and ask the user what to
+// do with it. Make a decision, and return it to the hook so that it can prevent other apps from recieving the event
+// (if so desired).
 LRESULT KaptivateAPI::ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     unsigned int vkey = (unsigned int)wParam & 255;
@@ -210,16 +210,15 @@ void KaptivateAPI::ProcessRawMouseInput(RAWINPUT* raw)
 {
 }
 
-// We're being asked to interpret a mouse hook event. Wait for the raw mouse event,
-// and ask the user what to do with it. Make a decision, and return it to the hook so that
-// it can prevent other apps from recieving the event (if so desired).
+// We're being asked to interpret a mouse hook event. Wait for the raw mouse event, and ask the user what to do
+// with it. Make a decision, and return it to the hook so that it can prevent other apps from recieving the
+// event (if so desired).
 LRESULT KaptivateAPI::ProcessMouseHook(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     return 0;
 }
 
-// Our window has recieved an event from the raw api. Figure out what it is, and process it if
-// appropriate.
+// Our window has recieved an event from the raw api. Figure out what it is, and process it if appropriate.
 void KaptivateAPI::ProcessRawInput(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     unsigned int pcbSize = 0;
@@ -244,8 +243,8 @@ cleanup:
     return;
 }
 
-// The keyboard or mouse hook has been called. This method gets called through some very special
-// magic. Decide what kind of event we're responding to, and call the appropriate handler.
+// The keyboard or mouse hook has been called. This method gets called through some very special magic.
+// Decide what kind of event we're responding to, and call the appropriate handler.
 LRESULT KaptivateAPI::_ProcessWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if(WM_INPUT == message)
@@ -278,8 +277,7 @@ LRESULT KaptivateAPI::_ProcessWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
 ////////////////////////////////////////////////////////////////////////////////
 // Main event loop (seperate thread)
 
-// The one, the only, WndProc handler for Kaptivate. All messages from the hooks
-// eventually wind up here.
+// The one, the only, WndProc handler for Kaptivate. All messages from the hooks eventually wind up here.
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     if(_localInstance)
@@ -292,14 +290,14 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     }
 }
 
-// Runs in a separate thread. Create an invisible window and process all events for
-// that window until the window is told to die.
+// Runs in a separate thread. Create an invisible window and process all events for that window until the window
+// is told to die.
 static DWORD WINAPI MessageLoop(LPVOID iValue)
 {
-    {
-        kapMsgLoopParams* params = (kapMsgLoopParams*)iValue;
-        params->success = false;
+    kapMsgLoopParams* params = (kapMsgLoopParams*)iValue;
+    params->success = false;
 
+    {
         // Register a window class
 
         WNDCLASSEX wce;
@@ -324,8 +322,8 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
         }
 
         // Set up the win32 message-only window which recieves messages
-        if(NULL == (params->callbackWindow = CreateWindowEx(NULL, L"KaptivateMsgWnd", NULL, NULL, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,
-            HWND_MESSAGE, NULL, (HINSTANCE)kaptivateDllModule, NULL)))
+        if(NULL == (params->callbackWindow = CreateWindowEx(NULL, L"KaptivateMsgWnd", NULL, NULL, CW_USEDEFAULT,
+            CW_USEDEFAULT, 0, 0, HWND_MESSAGE, NULL, (HINSTANCE)kaptivateDllModule, NULL)))
         {
             SetEvent(params->msgEvent);
             return -1;
@@ -344,10 +342,7 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
         DispatchMessage (&msg);
     }
 
-    {
-        kapMsgLoopParams* params = (kapMsgLoopParams*)iValue;
-        DestroyWindow(params->callbackWindow);
-    }
+    DestroyWindow(params->callbackWindow);
 
     return 0;
 }
@@ -373,7 +368,7 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         keyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
 
     pingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
-                                                                                           // random, but special... to me.
+                                                                                  // random, but special... to me.
     suspended = startSuspended;
 
     // Set up the data we're going to pass in
@@ -668,6 +663,7 @@ void KaptivateAPI::unregisterMouseHandler(MouseHandler* handler)
     dispatcher->unregisterMouseHandler(handler);
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Keyboard Event
 
@@ -736,6 +732,7 @@ void KeyboardEvent::setDecision(Decision decision)
     this->decision = decision;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Mouse Button Event
 
@@ -778,6 +775,7 @@ void MouseButtonEvent::setDecision(Decision decision)
     this->decision = decision;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Mouse Wheel Event
 
@@ -819,6 +817,7 @@ void MouseWheelEvent::setDecision(Decision decision)
 {
     this->decision = decision;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Mouse Move Event

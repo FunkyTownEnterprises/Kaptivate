@@ -1,5 +1,5 @@
 /*
- * event_queue.h
+ * event_queue.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *

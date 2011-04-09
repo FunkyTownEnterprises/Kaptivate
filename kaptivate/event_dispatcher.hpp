@@ -1,5 +1,5 @@
 /*
- * event_dispatcher.h
+ * event_dispatcher.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *

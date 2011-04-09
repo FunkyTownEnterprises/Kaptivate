@@ -1,5 +1,5 @@
 /*
- * sample_app.h
+ * sample_app.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *

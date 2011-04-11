@@ -1,5 +1,5 @@
 /*
- * kaptivate.h
+ * kaptivate.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -63,7 +63,9 @@ namespace Kaptivate
     class KAPTIVATE_API KeyboardEvent
     {
     private:
-        HANDLE device;
+        HANDLE deviceHandle;
+        KeyboardInfo* info;
+
         unsigned int vkey;
         unsigned int scanCode;
         unsigned int wmMessage;
@@ -75,6 +77,9 @@ namespace Kaptivate
         ~KeyboardEvent();
 
         HANDLE getDeviceHandle() const;
+        KeyboardInfo* getDeviceInfo() const;
+        void setDeviceInfo(KeyboardInfo* kbdInfo);
+
         unsigned int getVkey() const;
         unsigned int getScanCode() const;
         unsigned int getWindowMessage() const;
@@ -102,11 +107,17 @@ namespace Kaptivate
     class KAPTIVATE_API MouseButtonEvent
     {
     private:
+        HANDLE deviceHandle;
+        MouseInfo* info;
         Decision decision;
 
     public:
-        MouseButtonEvent();
+        MouseButtonEvent(HANDLE device);
         ~MouseButtonEvent();
+
+        HANDLE getDeviceHandle() const;
+        MouseInfo* getDeviceInfo() const;
+        void setDeviceInfo(MouseInfo* mouseInfo);
 
         Decision getDecision() const;
         void setDecision(Decision decision);
@@ -116,11 +127,17 @@ namespace Kaptivate
     class KAPTIVATE_API MouseWheelEvent
     {
     private:
+        HANDLE deviceHandle;
+        MouseInfo* info;
         Decision decision;
 
     public:
-        MouseWheelEvent();
+        MouseWheelEvent(HANDLE device);
         ~MouseWheelEvent();
+
+        HANDLE getDeviceHandle() const;
+        MouseInfo* getDeviceInfo() const;
+        void setDeviceInfo(MouseInfo* mouseInfo);
 
         Decision getDecision() const;
         void setDecision(Decision decision);
@@ -130,11 +147,17 @@ namespace Kaptivate
     class KAPTIVATE_API MouseMoveEvent
     {
     private:
+        HANDLE deviceHandle;
+        MouseInfo* info;
         Decision decision;
 
     public:
-        MouseMoveEvent();
+        MouseMoveEvent(HANDLE device);
         ~MouseMoveEvent();
+
+        HANDLE getDeviceHandle() const;
+        MouseInfo* getDeviceInfo() const;
+        void setDeviceInfo(MouseInfo* mouseInfo);
 
         Decision getDecision() const;
         void setDecision(Decision decision);
@@ -160,6 +183,7 @@ namespace Kaptivate
 
         // Private singleton methods
         KaptivateAPI();
+        ~KaptivateAPI();
         static bool instanceFlag;
         static KaptivateAPI *singleton;
 
@@ -203,8 +227,10 @@ namespace Kaptivate
 
     public:
 
+        ////////////////////////////////////////////////////////////////////////////////
+        // Kaptivate singleton methods
+
         // Public singleton methods
-        ~KaptivateAPI();
         static KaptivateAPI* getInstance();
         static void destroyInstance();
 

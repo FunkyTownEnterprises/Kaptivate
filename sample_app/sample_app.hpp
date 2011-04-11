@@ -1,5 +1,5 @@
 /*
- * event_queue.hpp
+ * sample_app.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -31,37 +31,4 @@
 
 #pragma once
 
-#include <queue>
-
-namespace Kaptivate
-{
-    class KeyboardEvent;
-    class MouseButtonEvent;
-    class MouseWheelEvent;
-    class MouseMoveEvent;
-
-    class EventQueue
-    {
-    private:
-        std::queue<KeyboardEvent*> kbEventQueue;
-        std::queue<MouseButtonEvent*> mbEventQueue;
-        std::queue<MouseWheelEvent*> mwEventQueue;
-        std::queue<MouseMoveEvent*> mmEventQueue;
-
-    public:
-        EventQueue();
-        ~EventQueue();
-
-        void EnqueueKeyboardEvent(KeyboardEvent* kbdEvent);
-        KeyboardEvent* DequeueKeyboardEvent();
-
-        void EnqueueMouseButtonEvent(MouseButtonEvent* mbEvent);
-        MouseButtonEvent* DequeueMouseButtonEvent();
-
-        void EnqueueMouseWheelEvent(MouseWheelEvent* mwEvent);
-        MouseWheelEvent* DequeueMouseWheelEvent();
-
-        void EnqueueMouseMoveEvent(MouseMoveEvent* mmEvent);
-        MouseMoveEvent* DequeueMouseMoveEvent();
-    };
-}
+#include "resource.hpp"

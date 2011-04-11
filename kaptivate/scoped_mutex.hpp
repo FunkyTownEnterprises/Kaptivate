@@ -1,5 +1,5 @@
 /*
- * scoped_mutex.h
+ * scoped_mutex.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *

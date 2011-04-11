@@ -1,5 +1,5 @@
 /*
- * kaptivate_exceptions.h
+ * kaptivate_exceptions.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *

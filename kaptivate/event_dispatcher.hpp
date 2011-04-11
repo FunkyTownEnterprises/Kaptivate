@@ -1,5 +1,5 @@
 /*
- * event_dispatcher.h
+ * event_dispatcher.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -81,6 +81,9 @@ namespace Kaptivate
 
         RexHandler* getKeyboardHandler(std::string regex, KeyboardHandler* handler);
         RexHandler* getMouseHandler(std::string regex, MouseHandler* handler);
+
+        KeyboardInfo* unknownKeyboardDevice(HANDLE device);
+        MouseInfo* unknownMouseDevice(HANDLE device);
 
         void newKeyboardDevice(KeyboardInfo* info);
         void newMouseDevice(MouseInfo* info);

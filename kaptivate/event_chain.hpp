@@ -1,5 +1,5 @@
 /*
- * event_chain.h
+ * event_chain.hpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *

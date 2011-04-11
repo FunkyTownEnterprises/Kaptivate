@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9.00"
 	Name="SampleApp"
-	ProjectGUID="{01C136DE-6F68-4499-9963-AF2EB1D3F913}"
+	ProjectGUID="{031EAAEF-A7F3-4CCC-B29B-CD4ECA9CFC1F}"
 	RootNamespace="SampleApp"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)kaptivate&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -65,7 +65,7 @@
 				AdditionalDependencies="&quot;$(OutDir)\Kaptivate.lib&quot;"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				SubSystem="2"
+				SubSystem="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -117,10 +117,12 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)kaptivate&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="stdafx.hpp"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -135,9 +137,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="&quot;$(OutDir)\Kaptivate.lib&quot;"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
-				SubSystem="2"
+				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
@@ -204,14 +207,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\resource.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\sample_app.hpp"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.hpp"
 				>
 			</File>
@@ -225,18 +220,6 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-			<File
-				RelativePath=".\sample_app.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\sample_app.rc"
-				>
-			</File>
-			<File
-				RelativePath=".\small.ico"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

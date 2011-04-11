@@ -26,14 +26,7 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFT
  */
 
-// stdafx.cpp : source file that includes just the standard includes
-// SampleApp.pch will be the pre-compiled header
-// stdafx.obj will contain the pre-compiled type information
-
 #include "stdafx.hpp"
-
-// TODO: reference any additional headers you need in STDAFX.H
-// and not in this file

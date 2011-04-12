@@ -99,8 +99,13 @@ public:
         }
         else if(evt.getVkey() == 82 && counter == 0)
         {
-            counter = 10;
-            evt.setDecision(PASS);
+            if(evt.getKeyUp())
+            {
+                counter = 10;
+                cout << "Reset the return count :)" << endl << endl;
+            }
+
+            evt.setDecision(CONSUME);
         }
     }
 };
@@ -120,7 +125,12 @@ public:
     virtual void HandleKeyEvent(KeyboardEvent& evt)
     {
         if(evt.getVkey() == VK_ESCAPE)
+        {
+            evt.setDecision(CONSUME);
+            cout << "Goodbye, cruel world" << endl;
+
             SetEvent(stopEvent);
+        }
     }
 };
 
@@ -181,7 +191,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
         cout << "* Destroying kaptivate instance... ";
         KaptivateAPI::destroyInstance();
-        cout << "ok." << endl;
+        cout << "ok." << endl << endl;
     }
     catch(KaptivateException &ex)
     {

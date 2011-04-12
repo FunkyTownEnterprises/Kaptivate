@@ -119,6 +119,7 @@
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="stdafx.hpp"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>

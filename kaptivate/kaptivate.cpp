@@ -93,6 +93,7 @@ KaptivateAPI::KaptivateAPI()
     keyboardMessage = 0;
     mouseMessage = 0;
     pingMessage = 0;
+    quitMessage = 0;
 }
 
 // Destructor
@@ -270,6 +271,10 @@ LRESULT KaptivateAPI::_ProcessWndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         // Ping / Pong
         return 1;
     }
+    else if(quitMessage == message)
+    {
+        PostQuitMessage(0);
+    }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -336,10 +341,18 @@ static DWORD WINAPI MessageLoop(LPVOID iValue)
 
     // Finally we get to the main event loop
     MSG msg;
-    while (0 != GetMessage (&msg, NULL, 0, 0))
+    BOOL bRet;
+    while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
     {
-        TranslateMessage(&msg);
-        DispatchMessage (&msg);
+        if(bRet == -1)
+        {
+            break;
+        }
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
 
     DestroyWindow(params->callbackWindow);
@@ -369,6 +382,8 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
 
     pingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
                                                                                   // random, but special... to me.
+    quitMessage = RegisterWindowMessage(L"25362DAA-41F9-4085-9EA9-E66E3211C1CD"); // this one's pretty well known
+
     suspended = startSuspended;
 
     // Set up the data we're going to pass in
@@ -441,12 +456,12 @@ bool KaptivateAPI::tryStopMsgLoop()
 {
     // Tell the window we're done
     DWORD res = 0;
-    if(0 == SendMessageTimeout(this->callbackWindow, WM_QUIT, 0, 0, SMTO_ABORTIFHUNG, 5000, &res))
+    if(0 == SendMessageTimeout(this->callbackWindow, quitMessage, 0, 0, SMTO_ABORTIFHUNG, 5000, &res))
         return false;
 
     // Wait for the thread to return
-    // TODO: Time out
-    WaitForSingleObject(msgLoopThread, INFINITE);
+    if(WAIT_OBJECT_0 != WaitForSingleObject(msgLoopThread, 5000))
+        return false;
 
     return true;
 }

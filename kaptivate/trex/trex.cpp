@@ -550,6 +550,7 @@ TRex *trex_compile(const TRexChar *pattern,const TRexChar **error)
 		if(*exp->_p!='\0')
 			trex_error(exp,_SC("unexpected character"));
 #ifdef _DEBUG
+		/*
 		{
 			int nsize,i;
 			TRexNode *t;
@@ -565,6 +566,7 @@ TRex *trex_compile(const TRexChar *pattern,const TRexChar **error)
 			}
 			scprintf(_SC("\n"));
 		}
+		*/
 #endif
 		exp->_matches = (TRexMatch *) malloc(exp->_nsubexpr * sizeof(TRexMatch));
 		memset(exp->_matches,0,exp->_nsubexpr * sizeof(TRexMatch));

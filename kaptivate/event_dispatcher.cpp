@@ -582,13 +582,20 @@ void EventDispatcher::scanDevices()
 
             if (pcbSize > 0)
             {
-                char* cDevName = (char*)malloc(sizeof(TCHAR) * pcbSize);
+                TCHAR* cDevName = (TCHAR*)malloc(sizeof(TCHAR) * pcbSize);
                 if(cDevName != NULL)
                 {
                     // Get the device name
                     if(GetRawInputDeviceInfo(rid.hDevice, RIDI_DEVICENAME, (LPVOID)cDevName, &pcbSize) > 0)
                     {
+#ifdef UNICODE
+                        wstring wdevName(cDevName);
+                        string devName(wdevName.begin(), wdevName.end());
+                        devName.assign(wdevName.begin(), wdevName.end());
+#else
                         string devName(cDevName); 
+#endif
+                        
                         if(rid.dwType == RIM_TYPEKEYBOARD)
                         {
                             if(keyboardDevices.count(rid.hDevice) == 0)

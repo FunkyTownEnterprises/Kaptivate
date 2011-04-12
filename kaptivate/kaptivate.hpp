@@ -224,6 +224,7 @@ namespace Kaptivate
         UINT keyboardMessage;
         UINT mouseMessage;
         UINT pingMessage;
+        UINT quitMessage;
 
     public:
 

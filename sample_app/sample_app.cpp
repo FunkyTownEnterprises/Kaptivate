@@ -39,18 +39,9 @@ using namespace std;
 #include "kaptivate_exceptions.hpp"
 using namespace Kaptivate;
 
-// Extend the keyboard handler. Must implement HandleKeyEvent
-class MyKeyboardHandler : public KeyboardHandler
+class KeyPrinter : public KeyboardHandler
 {
-private:
-    HANDLE stopEvent;
-
 public:
-    MyKeyboardHandler(HANDLE stopEvent)
-    {
-        this->stopEvent = stopEvent;
-    }
-
     virtual void HandleKeyEvent(KeyboardEvent& evt)
     {
         // Show some info about the event
@@ -59,34 +50,75 @@ public:
         cout << " vkey: " << evt.getVkey() << endl;
         cout << " scan code: " << evt.getScanCode() << endl;
         cout << " key up?: " << evt.getKeyUp() << endl;
+        cout << endl;
+    }
+};
 
+class SpaceEater : public KeyboardHandler
+{
+public:
+    virtual void HandleKeyEvent(KeyboardEvent& evt)
+    {
         // Decide whether or not to consume the keystroke
         if(evt.getVkey() == VK_SPACE)
-            evt.setDecision(CONSUME);
-        else
-            evt.setDecision(PERMIT);
-
-        // Print out the decision
-        cout << " decision: ";
-        switch(evt.getDecision())
         {
-        case UNDECIDED:
-            cout << "undecided" << endl;
-            break;
-        case PERMIT:
-            cout << "permit" << endl;
-            break;
-        case CONSUME:
-            cout << "consume" << endl;
-            break;
-        case PASS:
-            cout << "pass" << endl;
-            break;
-        default:
-            cout << "unknown" << endl;
+            evt.setDecision(CONSUME);
+            cout << "Nom nom nom" << endl << endl;
         }
+    }
+};
 
-        cout << endl;
+class ReturnAllowifier : public KeyboardHandler
+{
+private:
+    unsigned int counter;
+
+public:
+
+    ReturnAllowifier()
+    {
+        counter = 10;
+    }
+
+    virtual void HandleKeyEvent(KeyboardEvent& evt)
+    {
+        // Decide whether or not to consume the keystroke
+        if(evt.getVkey() == VK_RETURN)
+        {
+            if(counter > 0)
+            {
+                counter--;
+                evt.setDecision(PERMIT);
+                cout << "I'll allow it - this time." << endl << endl;
+            }
+            else
+            {
+                evt.setDecision(CONSUME);
+                cout << "No more return for you (press 'R' to reset)" << endl << endl;
+            }
+        }
+        else if(evt.getVkey() == 82 && counter == 0)
+        {
+            counter = 10;
+            evt.setDecision(PASS);
+        }
+    }
+};
+
+// Extend the keyboard handler. Must implement HandleKeyEvent
+class EscapeHandler : public KeyboardHandler
+{
+private:
+    HANDLE stopEvent;
+
+public:
+    EscapeHandler(HANDLE stopEvent)
+    {
+        this->stopEvent = stopEvent;
+    }
+
+    virtual void HandleKeyEvent(KeyboardEvent& evt)
+    {
         if(evt.getVkey() == VK_ESCAPE)
             SetEvent(stopEvent);
     }
@@ -96,50 +128,60 @@ int _tmain(int argc, _TCHAR* argv[])
 {
     KaptivateAPI* kap = NULL;
 
+    HANDLE stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    SpaceEater spaceHandler;
+    KeyPrinter printHandler;
+    ReturnAllowifier returnHandler;
+    EscapeHandler escapeHandler(stopEvent);
+
     try
     {
-    cout << "* Creating kaptivate instance... ";
-    if(NULL == (kap = KaptivateAPI::getInstance()))
-    {
-        cout << "error." << endl;
-        exit(1);
-    }
-    cout << "ok." << endl << endl;
+        cout << "* Creating kaptivate instance... ";
+        if(NULL == (kap = KaptivateAPI::getInstance()))
+        {
+            cout << "error." << endl;
+            exit(1);
+        }
+        cout << "ok." << endl << endl;
 
-    cout << "* List of keyboard devices: " << endl;
-    vector<KeyboardInfo> keyboards = kap->enumerateKeyboards();
-    vector<KeyboardInfo>::iterator kit;
-    for(kit = keyboards.begin(); kit != keyboards.end(); kit++)
-        cout << "  -> " << (*kit).name << endl;
-    cout << endl;
+        cout << "* List of keyboard devices: " << endl;
+        vector<KeyboardInfo> keyboards = kap->enumerateKeyboards();
+        vector<KeyboardInfo>::iterator kit;
+        for(kit = keyboards.begin(); kit != keyboards.end(); kit++)
+            cout << "  -> " << (*kit).name << endl;
+        cout << endl;
 
-    cout << "* Registering keyboard handler... ";
-    HANDLE stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    MyKeyboardHandler* handler = new MyKeyboardHandler(stopEvent);
-    kap->registerKeyboardHandler(".*", handler);
-    cout << "ok." << endl;
+        cout << "* Registering keyboard handlers... ";
 
-    cout << "* Starting kaptivate capture... ";
-    kap->startCapture(false);
-    cout << "ok." << endl << endl;
+        // NOTE: Order DOES matter. The first registered is the last called
+        kap->registerKeyboardHandler(".*", &printHandler);
+        kap->registerKeyboardHandler(".*", &spaceHandler);
+        kap->registerKeyboardHandler(".*", &returnHandler);
+        kap->registerKeyboardHandler(".*", &escapeHandler);
 
-    cout << "----------------------------------------------------------------------------" << endl;
-    cout << "- Kaptivate started. Press ESC to stop.                                    -" << endl;
-    cout << "----------------------------------------------------------------------------" << endl;
+        cout << "ok." << endl;
 
-    WaitForSingleObject(stopEvent, INFINITE);
-    CloseHandle (stopEvent);
+        cout << "* Starting kaptivate capture... ";
+        kap->startCapture(false);
+        cout << "ok." << endl << endl;
 
-    cout << "----------------------------------------------------------------------------" << endl;
+        cout << "----------------------------------------------------------------------------" << endl;
+        cout << "- Kaptivate started. Press ESC to stop.                                    -" << endl;
+        cout << "----------------------------------------------------------------------------" << endl;
 
-    cout << endl;
-    cout << "* Stopping kaptivate capture... ";
-    kap->stopCapture();
-    cout << "ok." << endl;
+        WaitForSingleObject(stopEvent, INFINITE);
+        CloseHandle(stopEvent);
 
-    cout << "* Destroying kaptivate instance... ";
-    KaptivateAPI::destroyInstance();
-    cout << "ok." << endl;
+        cout << "----------------------------------------------------------------------------" << endl;
+
+        cout << endl;
+        cout << "* Stopping kaptivate capture... ";
+        kap->stopCapture();
+        cout << "ok." << endl;
+
+        cout << "* Destroying kaptivate instance... ";
+        KaptivateAPI::destroyInstance();
+        cout << "ok." << endl;
     }
     catch(KaptivateException &ex)
     {

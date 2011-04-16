@@ -30,6 +30,8 @@
  */
 
 #include "stdafx.hpp"
+#include "resource.hpp"
+#include "sample_app.hpp"
 
 #include <vector>
 #include <iostream>
@@ -39,20 +41,22 @@ using namespace std;
 #include "kaptivate_exceptions.hpp"
 using namespace Kaptivate;
 
-class KeyPrinter : public KeyboardHandler
-{
-public:
-    virtual void HandleKeyEvent(KeyboardEvent& evt)
-    {
-        // Show some info about the event
-        cout << "Got a keyboard event:" << endl;
-        cout << " device: " << evt.getDeviceInfo()->name << endl;
-        cout << " vkey: " << evt.getVkey() << endl;
-        cout << " scan code: " << evt.getScanCode() << endl;
-        cout << " key up?: " << evt.getKeyUp() << endl;
-        cout << endl;
-    }
-};
+#ifdef UNICODE
+#define stringcopy wcscpy
+#else
+#define stringcopy strcpy
+#endif
+
+#define ID_TRAY_APP_ICON                 5000
+#define ID_TRAY_EXIT_CONTEXT_MENU_ITEM   3000
+#define ID_TRAY_PAUSE_CONTEXT_MENU_ITEM  3001
+#define ID_TRAY_RESUME_CONTEXT_MENU_ITEM 3002
+#define WM_TRAYICON (WM_USER + 1)
+
+UINT WM_TASKBARCREATED = 0 ;
+HWND g_hwnd;
+HMENU g_menu;
+NOTIFYICONDATA g_notifyIconData ;
 
 class SpaceEater : public KeyboardHandler
 {
@@ -61,142 +65,167 @@ public:
     {
         // Decide whether or not to consume the keystroke
         if(evt.getVkey() == VK_SPACE)
-        {
             evt.setDecision(CONSUME);
-            cout << "Nom nom nom" << endl << endl;
-        }
     }
 };
 
-class ReturnAllowifier : public KeyboardHandler
+LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-private:
-    unsigned int counter;
-
-public:
-
-    ReturnAllowifier()
+    switch (message)
     {
-        counter = 10;
-    }
+    case WM_CREATE:
+        g_menu = CreatePopupMenu();
+        AppendMenu(g_menu, MF_STRING | MF_GRAYED,
+            ID_TRAY_RESUME_CONTEXT_MENU_ITEM, TEXT("&Resume"));
+        AppendMenu(g_menu, MF_STRING, ID_TRAY_PAUSE_CONTEXT_MENU_ITEM, TEXT("&Pause"));
+        AppendMenu(g_menu, MF_SEPARATOR, NULL, NULL);
+        AppendMenu(g_menu, MF_STRING, ID_TRAY_EXIT_CONTEXT_MENU_ITEM,  TEXT("E&xit"));
 
-    virtual void HandleKeyEvent(KeyboardEvent& evt)
-    {
-        // Decide whether or not to consume the keystroke
-        if(evt.getVkey() == VK_RETURN)
+        MessageBoxEx(hwnd, TEXT("Kaptivate is running! No more spaces for you.\nUse the icon in the system tray to exit."),
+            TEXT("Kaptivate"), MB_OK, 0);
+        break;
+
+    case WM_TRAYICON:
         {
-            if(counter > 0)
+            if (lParam == WM_LBUTTONUP)
             {
-                counter--;
-                evt.setDecision(PERMIT);
-                cout << "I'll allow it - this time." << endl << endl;
+                //printf( "You have restored me!\n" ) ;
+                //Restore();
             }
-            else
+            else if (lParam == WM_RBUTTONUP)
             {
-                evt.setDecision(CONSUME);
-                cout << "No more return for you (press 'R' to reset)" << endl << endl;
+                POINT curPoint ;
+                GetCursorPos(&curPoint) ;
+                SetForegroundWindow(hwnd); 
+                UINT clicked = TrackPopupMenu(g_menu, TPM_RETURNCMD | TPM_NONOTIFY,
+                    curPoint.x, curPoint.y, 0, hwnd, NULL);
+
+                if(clicked == ID_TRAY_EXIT_CONTEXT_MENU_ITEM)
+                {
+                    // quit the application.
+                    PostQuitMessage(0);
+                }
+                else if(clicked == ID_TRAY_PAUSE_CONTEXT_MENU_ITEM)
+                {
+                    try
+                    {
+                        KaptivateAPI* kaptivate = KaptivateAPI::getInstance();
+                        kaptivate->suspendCapture();
+                        if(kaptivate->isSuspended())
+                        {
+                            EnableMenuItem(g_menu, ID_TRAY_PAUSE_CONTEXT_MENU_ITEM, MF_GRAYED);
+                            EnableMenuItem(g_menu, ID_TRAY_RESUME_CONTEXT_MENU_ITEM, MF_ENABLED);
+                        }
+                    }
+                    catch(KaptivateException)
+                    {
+                        MessageBoxEx(hwnd, TEXT("Unable to pause."), TEXT("Kaptivate"), MB_OK, 0);
+                    }
+                }
+                else if(clicked == ID_TRAY_RESUME_CONTEXT_MENU_ITEM)
+                {
+                    try
+                    {
+                        KaptivateAPI* kaptivate = KaptivateAPI::getInstance();
+                        kaptivate->resumeCapture();
+                        if(!kaptivate->isSuspended())
+                        {
+                            EnableMenuItem(g_menu, ID_TRAY_PAUSE_CONTEXT_MENU_ITEM, MF_ENABLED);
+                            EnableMenuItem(g_menu, ID_TRAY_RESUME_CONTEXT_MENU_ITEM, MF_GRAYED);
+                        }
+                    }
+                    catch(KaptivateException)
+                    {
+                        MessageBoxEx(hwnd, TEXT("Unable to resume."), TEXT("Kaptivate"), MB_OK, 0);
+                    }
+                }
             }
         }
-        else if(evt.getVkey() == 82 && counter == 0)
-        {
-            if(evt.getKeyUp())
-            {
-                counter = 10;
-                cout << "Reset the return count :)" << endl << endl;
-            }
+        break;
 
-            evt.setDecision(CONSUME);
-        }
+    case WM_CLOSE:
+        //Minimize() ;
+        return 0;
+
+    case WM_DESTROY:
+        printf( "DESTROY!!\n" ) ;
+        PostQuitMessage (0);
+        break;
     }
-};
 
-// Extend the keyboard handler. Must implement HandleKeyEvent
-class EscapeHandler : public KeyboardHandler
+    return DefWindowProc( hwnd, message, wParam, lParam ) ;
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR args, int iCmdShow)
 {
-private:
-    HANDLE stopEvent;
-
-public:
-    EscapeHandler(HANDLE stopEvent)
-    {
-        this->stopEvent = stopEvent;
-    }
-
-    virtual void HandleKeyEvent(KeyboardEvent& evt)
-    {
-        if(evt.getVkey() == VK_ESCAPE)
-        {
-            evt.setDecision(CONSUME);
-            cout << "Goodbye, cruel world" << endl;
-
-            SetEvent(stopEvent);
-        }
-    }
-};
-
-int _tmain(int argc, _TCHAR* argv[])
-{
-    KaptivateAPI* kap = NULL;
-
-    HANDLE stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     SpaceEater spaceHandler;
-    KeyPrinter printHandler;
-    ReturnAllowifier returnHandler;
-    EscapeHandler escapeHandler(stopEvent);
+    KaptivateAPI* kaptivate = NULL;
 
     try
     {
-        cout << "* Creating kaptivate instance... ";
-        if(NULL == (kap = KaptivateAPI::getInstance()))
+        // Set up our win32 stuff to process the trayicon
         {
-            cout << "error." << endl;
-            exit(1);
+            TCHAR className[] = TEXT( "tray icon class" );
+            WM_TASKBARCREATED = RegisterWindowMessageA("TaskbarCreated") ;
+
+            WNDCLASSEX wnd = { 0 };
+
+            wnd.hInstance = hInstance;
+            wnd.lpszClassName = className;
+            wnd.lpfnWndProc = WndProc;
+            wnd.style = CS_HREDRAW | CS_VREDRAW ;
+            wnd.cbSize = sizeof (WNDCLASSEX);
+            wnd.hIcon = NULL;
+            wnd.hIconSm = NULL;
+            wnd.hCursor = NULL;
+            wnd.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
+
+            if(!RegisterClassEx(&wnd))
+                FatalAppExit(0, TEXT("Couldn't register window class!"));
+
+            g_hwnd = CreateWindowEx(NULL, className, NULL, NULL, CW_USEDEFAULT, CW_USEDEFAULT,
+                0, 0, HWND_MESSAGE, NULL, hInstance, NULL);
+
+            memset(&g_notifyIconData, 0, sizeof(NOTIFYICONDATA));
+            g_notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+            g_notifyIconData.hWnd = g_hwnd;
+            g_notifyIconData.uID = ID_TRAY_APP_ICON;
+            g_notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+            g_notifyIconData.uCallbackMessage = WM_TRAYICON;
+            g_notifyIconData.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SMALL));
+            stringcopy(g_notifyIconData.szTip, TEXT("Kaptivate"));
+            Shell_NotifyIcon(NIM_ADD, &g_notifyIconData);
         }
-        cout << "ok." << endl << endl;
 
-        cout << "* List of keyboard devices: " << endl;
-        vector<KeyboardInfo> keyboards = kap->enumerateKeyboards();
-        vector<KeyboardInfo>::iterator kit;
-        for(kit = keyboards.begin(); kit != keyboards.end(); kit++)
-            cout << "  -> " << (*kit).name << endl;
-        cout << endl;
+        // Set up Kaptivate
+        kaptivate = KaptivateAPI::getInstance();
+        kaptivate->enumerateKeyboards();
+        kaptivate->registerKeyboardHandler(".*", &spaceHandler);
+        kaptivate->startCapture(false, true);
 
-        cout << "* Registering keyboard handlers... ";
+        MSG msg;
+        while(GetMessage(&msg, NULL, 0, 0))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
 
-        // NOTE: Order DOES matter. The first registered is the last called
-        kap->registerKeyboardHandler(".*", &printHandler);
-        kap->registerKeyboardHandler(".*", &spaceHandler);
-        kap->registerKeyboardHandler(".*", &returnHandler);
-        kap->registerKeyboardHandler(".*", &escapeHandler);
-
-        cout << "ok." << endl;
-
-        cout << "* Starting kaptivate capture... ";
-        kap->startCapture(false);
-        cout << "ok." << endl << endl;
-
-        cout << "----------------------------------------------------------------------------" << endl;
-        cout << "- Kaptivate started. Press ESC to stop.                                    -" << endl;
-        cout << "----------------------------------------------------------------------------" << endl;
-
-        WaitForSingleObject(stopEvent, INFINITE);
-        CloseHandle(stopEvent);
-
-        cout << "----------------------------------------------------------------------------" << endl;
-
-        cout << endl;
-        cout << "* Stopping kaptivate capture... ";
-        kap->stopCapture();
-        cout << "ok." << endl;
-
-        cout << "* Destroying kaptivate instance... ";
+        kaptivate->stopCapture();
         KaptivateAPI::destroyInstance();
-        cout << "ok." << endl << endl;
+
+        Shell_NotifyIcon(NIM_DELETE, &g_notifyIconData);
+
+        return msg.wParam;
     }
-    catch(KaptivateException &ex)
+    catch(KaptivateException &kex)
     {
-        cout << "Exception: " << ex.what() << endl;
+        char msg[4096];
+        wchar_t wmsg[4096];
+        sprintf(msg, "Kaptivate exception: %s", kex.what());
+        mbstowcs(wmsg, msg, 4096);
+
+        FatalAppExit(0, wmsg);
     }
 
-    return 0;
+    return 1;
 }

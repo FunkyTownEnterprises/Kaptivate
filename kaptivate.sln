@@ -1,12 +1,9 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Kaptivate", "kaptivate\kaptivate.vcproj", "{F8843170-DEE4-49AE-B5B6-F50584E725F8}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kaptivate", "kaptivate\kaptivate.vcxproj", "{F8843170-DEE4-49AE-B5B6-F50584E725F8}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleApp", "sample_app\sample_app.vcproj", "{A4DFCF4F-2FD0-433B-AD40-2EDEADC63011}"
-	ProjectSection(ProjectDependencies) = postProject
-		{F8843170-DEE4-49AE-B5B6-F50584E725F8} = {F8843170-DEE4-49AE-B5B6-F50584E725F8}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleApp", "sample_app\sample_app.vcxproj", "{A4DFCF4F-2FD0-433B-AD40-2EDEADC63011}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

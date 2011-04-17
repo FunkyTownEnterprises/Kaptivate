@@ -182,7 +182,13 @@ LRESULT KaptivateAPI::ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lPara
         if(evt == NULL)
         {
             MSG msg;
-            while(!PeekMessage(&msg, hWnd, WM_INPUT, WM_INPUT, PM_REMOVE));
+
+            while(!PeekMessage(&msg, hWnd, WM_INPUT, WM_INPUT, PM_REMOVE))
+			{
+				if(!WaitMessage())
+					return 0;
+			}
+
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }

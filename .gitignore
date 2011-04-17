@@ -2,3 +2,7 @@
 *.suo
 Debug
 Release
+
+*.vsp
+*.opensdf
+*.sdf

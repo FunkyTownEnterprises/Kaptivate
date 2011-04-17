@@ -15,6 +15,15 @@ Kaptivate is a library designed to capture keyboard and mouse traffic. Although 
 
 This library was designed to be a more programmer-friendly version of [HID macros] [1]. Ultimately the goal is to provide a simple API for capturing, consuming, and filtering keystrokes and mouse events. Due to limitations of the underlying API, the library must be written in C / C++. A C# wrapper will be provided for ease of use.
 
+Example Uses
+-------------------------
+*  Super easy key logger (let's get that one out of the way)
+*  Easily read from card scanners which masquerade as keyboard devices
+*  Filter input (prevent other apps from seeing certain keyboard and mouse events)
+*  Filter devices (prevent other apps from seeing keyboard and mouse events from certain devices)
+*  Take over a specific keyboard or mouse device (by preventing other apps from seeing the input)
+*  Mess with people (filter every third 'e' key event)
+
 Caveats
 -------------------------
 
@@ -22,7 +31,9 @@ Due to the Win32 API calls, there is no guarantee that this library will receive
 
 This library deals in <em>raw key events</em>, NOT digested character messages. At best you will need to translate a virtual keycode to a character. If more complicated modifiers are involved (i.e. shift, ctrl, etc) more advanced trickery will be required. At some point this library may add this functionality, but for now it isn't planned.
 
-Finally, and most importantly, this library runs its own thread for processing events. Which means that yes, my dear user, you get to be responsible for thread safety. Luckily there is only one additional thread to worry about, but your code must be thread safe. Any handlers you register will execute within Kaptivate's event thread. One side effect of having only one thread is that the speed of processing is entirely dependant upon the handlers. If the user notices any perceivable input lag, odds are it's your handler.
+Finally, and most importantly, this library runs its own thread(s) for processing events. Which means that yes, my dear user, you get to be responsible for thread safety. Luckily there is only one additional thread to worry about (which calls your callback functions), but your code MUST be thread safe. Any handlers you register will execute within Kaptivate's event thread. Please note: if your handlers are slow, the input will feel slow. Things will hold up until you've processed everything.
+
+See the [wiki][3] for a simple example.
 
 References
 -------------------------
@@ -34,8 +45,10 @@ References
 Requirements
 -------------------------
 
-*  Visual Studio 2008 or higher
+*  Visual Studio 2010 or higher
+*  Tested on Windows XP Professional and Windows 7 Professional
 
 
 [1]: http://www.hidmacros.eu/   "HID macros"
-[2]: http://www.securics.com/          "Securics, Inc."
+[2]: http://www.securics.com/   "Securics, Inc."
+[3]: https://github.com/FunkyTownEnterprises/Kaptivate/wiki "Kaptivate Wiki"

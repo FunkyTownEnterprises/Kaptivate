@@ -1,8 +1,8 @@
 *.ncb
 *.suo
-Debug
-Release
-
+Debug/
+Release/
+ipch/
 *.vsp
 *.opensdf
 *.sdf

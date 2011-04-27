@@ -221,12 +221,6 @@ namespace Kaptivate
         LRESULT ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lParam);
         void ProcessRawKeyboardInput(RAWINPUT* raw);
 
-        // Message processing members
-        UINT keyboardMessage;
-        UINT mouseMessage;
-        UINT pingMessage;
-        UINT quitMessage;
-
     public:
 
         ////////////////////////////////////////////////////////////////////////////////

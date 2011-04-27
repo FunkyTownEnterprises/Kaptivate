@@ -55,6 +55,14 @@ using namespace std;
 using namespace Kaptivate;
 
 ////////////////////////////////////////////////////////////////////////////////
+// defines
+
+#define MOUSE_MESSAGE    (WM_USER + 1011)
+#define KEYBOARD_MESSAGE (WM_USER + 1012)
+#define PING_MESSAGE     (WM_USER + 1013)
+#define QUIT_MESSAGE     (WM_USER + 1014)
+
+////////////////////////////////////////////////////////////////////////////////
 // Static and extern data
 
 extern HMODULE kaptivateDllModule;
@@ -90,10 +98,6 @@ KaptivateAPI::KaptivateAPI()
 
     dispatcher = new EventDispatcher();
     events = new EventQueue();
-    keyboardMessage = 0;
-    mouseMessage = 0;
-    pingMessage = 0;
-    quitMessage = 0;
 
     hookCallbackWindow = 0;
     rawCallbackWindow = 0;
@@ -240,24 +244,24 @@ cleanup:
 // Decide what kind of event we're responding to, and call the appropriate handler.
 LRESULT KaptivateAPI::_ProcessHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    if(mouseMessage == message)
+    if(MOUSE_MESSAGE == message)
     {
         if(suspended)
             return 0;
         return ProcessMouseHook(hWnd, wParam, lParam);
     }
-    else if(keyboardMessage == message)
+    else if(KEYBOARD_MESSAGE == message)
     {
         if(suspended)
             return 0;
         return ProcessKeyboardHook(hWnd, wParam, lParam);
     }
-    else if(pingMessage == message)
+    else if(PING_MESSAGE == message)
     {
         // Ping / Pong
         return 1;
     }
-    else if(quitMessage == message)
+    else if(QUIT_MESSAGE == message)
     {
         PostQuitMessage(0);
     }
@@ -273,12 +277,12 @@ LRESULT KaptivateAPI::_ProcessRawWndProc(HWND hWnd, UINT message, WPARAM wParam,
             ProcessRawInput(hWnd, message, wParam, lParam);
         return 0;
     }
-    else if(pingMessage == message)
+    else if(PING_MESSAGE == message)
     {
         // Ping / Pong
         return 1;
     }
-    else if(quitMessage == message)
+    else if(QUIT_MESSAGE == message)
     {
         PostQuitMessage(0);
     }
@@ -453,19 +457,6 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         throw KaptivateException("He who wants nothing has everything");
     if(running)
         throw KaptivateException("Kaptivate is already running");
-
-    // Find out what our messaging is going to look like
-    mouseMessage = 0;
-    keyboardMessage = 0;
-    if(wantMouse)
-        mouseMessage = RegisterWindowMessage(L"6F3DB758-492B-4693-BC23-45F6A44C9625"); // just some random guid
-    if(wantKeyboard)
-        keyboardMessage = RegisterWindowMessage(L"FF2FD0A6-C41C-463c-94D8-1AD852C57E74"); // another random guid
-
-    pingMessage = RegisterWindowMessage(L"F77D4A67-0F92-44d6-B1DF-24264F4CD97C"); // oh but this one's special...
-                                                                                  // random, but special... to me.
-    quitMessage = RegisterWindowMessage(L"25362DAA-41F9-4085-9EA9-E66E3211C1CD"); // whoop, back to totally random
-
     suspended = startSuspended;
 
     {
@@ -514,7 +505,6 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
             throw KaptivateException("Something horrible has happened");
     }
 
-
     // Finally set up the hooks
     try
     {
@@ -525,8 +515,8 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
         }
 
         short ss = (startSuspended) ? 1 : 0;
-        if(0 != kaptivateHookInit(this->hookCallbackWindow, keyboardMessage,
-                                  mouseMessage, msgTimeoutMs, ss))
+        if(0 != kaptivateHookInit(this->hookCallbackWindow, KEYBOARD_MESSAGE,
+                                  MOUSE_MESSAGE, msgTimeoutMs, ss))
             throw KaptivateException("Failed to initialize the hooks");
     }
     catch(...)
@@ -570,7 +560,7 @@ bool KaptivateAPI::tryStopMsgLoop()
 {
     // Tell the hook window we're done
     DWORD res = 0;
-    if(0 == SendMessageTimeout(this->hookCallbackWindow, this->quitMessage, 0, 0, SMTO_ABORTIFHUNG, 5000, &res))
+    if(0 == SendMessageTimeout(this->hookCallbackWindow, QUIT_MESSAGE, 0, 0, SMTO_ABORTIFHUNG, 5000, &res))
         return false;
 
     // Wait for the hook thread to return
@@ -579,7 +569,7 @@ bool KaptivateAPI::tryStopMsgLoop()
 
     // Tell the raw window we're done
     res = 0;
-    if(0 == SendMessageTimeout(this->rawCallbackWindow, this->quitMessage, 0, 0, SMTO_ABORTIFHUNG, 5000, &res))
+    if(0 == SendMessageTimeout(this->rawCallbackWindow, QUIT_MESSAGE, 0, 0, SMTO_ABORTIFHUNG, 5000, &res))
         return false;
 
     // Wait for the raw thread to return
@@ -696,7 +686,7 @@ bool KaptivateAPI::pingMessageWindow(HWND wnd) const
 
     while(true)
     {
-        res = SendMessageTimeout(wnd, pingMessage, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwres);
+        res = SendMessageTimeout(wnd, PING_MESSAGE, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwres);
         if(0 == res)
         {
             if(ERROR_TIMEOUT == GetLastError())

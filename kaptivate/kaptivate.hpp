@@ -184,7 +184,6 @@ namespace Kaptivate
         // Private singleton methods
         KaptivateAPI();
         ~KaptivateAPI();
-        static bool instanceFlag;
         static KaptivateAPI *singleton;
 
         // Class members
@@ -196,8 +195,10 @@ namespace Kaptivate
         bool suspended;
 
         // Stuff for the main message loop thread
-        HANDLE msgLoopThread;
-        HWND callbackWindow;
+        HANDLE hookMsgLoopThread;
+        HANDLE rawMsgLoopThread;
+        HWND hookCallbackWindow;
+        HWND rawCallbackWindow;
 
         // To keep track of what type of devices we want from the raw API
         bool rawKeyboardRunning;
@@ -207,7 +208,7 @@ namespace Kaptivate
 
         // Internal utility methods
         bool tryStopMsgLoop();
-        bool pingMessageWindow() const;
+        bool pingMessageWindow(HWND wnd) const;
         bool startRawCapture(bool wantMouse, bool wantKeyboard);
         bool stopRawCapture();
 
@@ -261,6 +262,7 @@ namespace Kaptivate
         void unregisterMouseHandler(MouseHandler* handler);
 
         // Window message processing
-        LRESULT _ProcessWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+        LRESULT _ProcessHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+        LRESULT _ProcessRawWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     };
 }

@@ -52,4 +52,24 @@ namespace Kaptivate
         ScopedUnlock(HANDLE mutex);
         ~ScopedUnlock();
     };
+
+    class ScopedCriticalSection
+    {
+    private:
+        LPCRITICAL_SECTION criticalSection;
+
+    public:
+        ScopedCriticalSection(LPCRITICAL_SECTION criticalSection);
+        ~ScopedCriticalSection();
+    };
+
+    class ScopedNonCriticalSection
+    {
+    private:
+        LPCRITICAL_SECTION criticalSection;
+
+    public:
+        ScopedNonCriticalSection(LPCRITICAL_SECTION criticalSection);
+        ~ScopedNonCriticalSection();
+    };
 }

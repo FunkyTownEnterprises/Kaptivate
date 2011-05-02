@@ -60,3 +60,29 @@ ScopedUnlock::~ScopedUnlock()
     if(WAIT_OBJECT_0 != WaitForSingleObject(hMutex, INFINITE))
         throw KaptivateException("Unable to aquire the lock");
 }
+
+ScopedCriticalSection::ScopedCriticalSection(LPCRITICAL_SECTION criticalSection)
+{
+    this->criticalSection = criticalSection;
+    if(this->criticalSection == NULL)
+        throw KaptivateException("NULL critical section");
+    EnterCriticalSection(this->criticalSection);
+}
+
+ScopedCriticalSection::~ScopedCriticalSection()
+{
+    LeaveCriticalSection(this->criticalSection);
+}
+
+ScopedNonCriticalSection::ScopedNonCriticalSection(LPCRITICAL_SECTION criticalSection)
+{
+    this->criticalSection = criticalSection;
+    if(this->criticalSection == NULL)
+        throw KaptivateException("NULL critical section");
+    LeaveCriticalSection(this->criticalSection);
+}
+
+ScopedNonCriticalSection::~ScopedNonCriticalSection()
+{
+    EnterCriticalSection(this->criticalSection);
+}

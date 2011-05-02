@@ -63,19 +63,18 @@ namespace Kaptivate
     class EventDispatcher
     {
     private:
-        HANDLE kdLock;
-        HANDLE mdLock;
+        CRITICAL_SECTION kdLock;
+        CRITICAL_SECTION mdLock;
         std::map<HANDLE, KeyboardInfo*> keyboardDevices;
         std::map<HANDLE, MouseInfo*> mouseDevices;
 
-        HANDLE kecLock;
-        HANDLE mecLock;
+        CRITICAL_SECTION kecLock;
+        CRITICAL_SECTION mecLock;
         std::map<HANDLE, KeyboardEventChain*> kbdEventChains;
         std::map<HANDLE, MouseEventChain*> mouseEventChains;
 
-        HANDLE kbHRMLock;
-        HANDLE mdHRMLock;
-
+        CRITICAL_SECTION kbHRMLock;
+        CRITICAL_SECTION mdHRMLock;
         std::multimap<std::string, RexHandler*> kHandlerRexMap;
         std::multimap<std::string, RexHandler*> mHandlerRexMap;
 

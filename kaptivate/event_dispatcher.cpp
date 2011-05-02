@@ -46,12 +46,12 @@ using namespace Kaptivate;
 // Constructor
 EventDispatcher::EventDispatcher()
 {
-    kdLock = CreateMutex(NULL, FALSE, NULL);
-    mdLock = CreateMutex(NULL, FALSE, NULL);
-    kbHRMLock = CreateMutex(NULL, FALSE, NULL);
-    mdHRMLock = CreateMutex(NULL, FALSE, NULL);
-    kecLock = CreateMutex(NULL, FALSE, NULL);
-    mecLock = CreateMutex(NULL, FALSE, NULL);
+    InitializeCriticalSection(&kdLock);
+    InitializeCriticalSection(&mdLock);
+    InitializeCriticalSection(&kbHRMLock);
+    InitializeCriticalSection(&mdHRMLock);
+    InitializeCriticalSection(&kecLock);
+    InitializeCriticalSection(&mecLock);
 }
 
 // Destructor
@@ -64,12 +64,12 @@ EventDispatcher::~EventDispatcher()
     cleanupMouseDeviceMap();
     cleanupKeyboardDeviceMap();
 
-    CloseHandle(kdLock);
-    CloseHandle(mdLock);
-    CloseHandle(kbHRMLock);
-    CloseHandle(mdHRMLock);
-    CloseHandle(kecLock);
-    CloseHandle(mecLock);
+    DeleteCriticalSection(&kdLock);
+    DeleteCriticalSection(&mdLock);
+    DeleteCriticalSection(&kbHRMLock);
+    DeleteCriticalSection(&mdHRMLock);
+    DeleteCriticalSection(&kecLock);
+    DeleteCriticalSection(&mecLock);
 }
 
 // Dispatch a keyboard event to any registered handlers
@@ -79,7 +79,7 @@ void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
 
     {
         // Set the device info if it's available
-        ScopedLock kMutex(kdLock);
+        ScopedCriticalSection kMutex(&kdLock);
         if(keyboardDevices.count(dev) > 0)
         {
             evt.setDeviceInfo(keyboardDevices[dev]);
@@ -87,7 +87,7 @@ void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
         else
         {
             // It's an unknown device, let's see what we can find out about it.
-            ScopedUnlock unlock(kdLock);
+            ScopedNonCriticalSection unlock(&kdLock);
             KeyboardInfo *kbd = unknownKeyboardDevice(dev);
             if(kbd)
             {
@@ -98,7 +98,7 @@ void EventDispatcher::handleKeyboard(KeyboardEvent& evt)
 
     {
         // Run the chain, let someone make a decision about this event
-        ScopedLock kecMutex(kecLock);
+        ScopedCriticalSection kecMutex(&kecLock);
         if(kbdEventChains.count(dev) > 0 && kbdEventChains[dev]->chainSize() > 0)
         {
             // We've got a real handler, give it to them (and hard)
@@ -119,7 +119,7 @@ void EventDispatcher::handleMouseButton(MouseButtonEvent& evt)
 
     {
         // Set the device info if it's available
-        ScopedLock mMutex(mdLock);
+        ScopedCriticalSection mMutex(&mdLock);
         if(mouseDevices.count(dev) > 0)
         {
             evt.setDeviceInfo(mouseDevices[dev]);
@@ -127,7 +127,7 @@ void EventDispatcher::handleMouseButton(MouseButtonEvent& evt)
         else
         {
             // It's an unknown device, let's see what we can find out about it.
-            ScopedUnlock unlock(mdLock);
+            ScopedNonCriticalSection unlock(&mdLock);
             MouseInfo *mi = unknownMouseDevice(dev);
             if(mi)
             {
@@ -138,7 +138,7 @@ void EventDispatcher::handleMouseButton(MouseButtonEvent& evt)
 
     {
         // Run the chain, let someone make a decision about this event
-        ScopedLock mecMutex(mecLock);
+        ScopedCriticalSection mecMutex(&mecLock);
         if(mouseEventChains.count(dev) > 0 && mouseEventChains[dev]->chainSize() > 0)
         {
             // You like me! You really, really like me!
@@ -159,7 +159,7 @@ void EventDispatcher::handleMouseWheel(MouseWheelEvent& evt)
 
     {
         // Set the device name if it's available
-        ScopedLock mMutex(mdLock);
+        ScopedCriticalSection mMutex(&mdLock);
         if(mouseDevices.count(dev) > 0)
         {
             evt.setDeviceInfo(mouseDevices[dev]);
@@ -167,7 +167,7 @@ void EventDispatcher::handleMouseWheel(MouseWheelEvent& evt)
         else
         {
             // It's an unknown device, let's see what we can find out about it.
-            ScopedUnlock unlock(mdLock);
+            ScopedNonCriticalSection unlock(&mdLock);
             MouseInfo *mi = unknownMouseDevice(dev);
             if(mi)
             {
@@ -178,7 +178,7 @@ void EventDispatcher::handleMouseWheel(MouseWheelEvent& evt)
 
     {
         // Run the chain, let someone make a decision about this event
-        ScopedLock mecMutex(mecLock);
+        ScopedCriticalSection mecMutex(&mecLock);
         if(mouseEventChains.count(dev) > 0 && mouseEventChains[dev]->chainSize() > 0)
         {
             // You like me! You really, really like me!
@@ -199,7 +199,7 @@ void EventDispatcher::handleMouseMove(MouseMoveEvent& evt)
 
     {
         // Set the device name if it's available
-        ScopedLock mMutex(mdLock);
+        ScopedCriticalSection mMutex(&mdLock);
         if(mouseDevices.count(dev) > 0)
         {
             evt.setDeviceInfo(mouseDevices[dev]);
@@ -207,7 +207,7 @@ void EventDispatcher::handleMouseMove(MouseMoveEvent& evt)
         else
         {
             // It's an unknown device, let's see what we can find out about it.
-            ScopedUnlock unlock(mdLock);
+            ScopedNonCriticalSection unlock(&mdLock);
             MouseInfo *mi = unknownMouseDevice(dev);
             if(mi)
             {
@@ -218,7 +218,7 @@ void EventDispatcher::handleMouseMove(MouseMoveEvent& evt)
 
     {
         // Run the chain, let someone make a decision about this event
-        ScopedLock mecMutex(mecLock);
+        ScopedCriticalSection mecMutex(&mecLock);
         if(mouseEventChains.count(dev) > 0 && mouseEventChains[dev]->chainSize() > 0)
         {
             // You like me! You really, really like me!
@@ -239,7 +239,7 @@ vector<KeyboardInfo> EventDispatcher::enumerateKeyboards()
     scanDevices();
 
     {
-        ScopedLock kMutex(kdLock);
+        ScopedCriticalSection kMutex(&kdLock);
 
         map<HANDLE, KeyboardInfo*>::iterator it;
         for(it = keyboardDevices.begin() ; it != keyboardDevices.end(); it++)
@@ -261,7 +261,7 @@ vector<MouseInfo> EventDispatcher::enumerateMice()
     scanDevices();
 
     {
-        ScopedLock mMutex(mdLock);
+        ScopedCriticalSection mMutex(&mdLock);
 
         map<HANDLE, MouseInfo*>::iterator it;
         for(it = mouseDevices.begin() ; it != mouseDevices.end(); it++)
@@ -293,7 +293,7 @@ void EventDispatcher::resgisterMouseHandler(string idRegex, MouseHandler* handle
 // Unregister a handler for keyboard events
 void EventDispatcher::unregisterKeyboardHandler(KeyboardHandler* handler)
 {
-    ScopedLock kecMutex(kecLock);
+    ScopedCriticalSection kecMutex(&kecLock);
     map<HANDLE, KeyboardEventChain*>::iterator it;
     for(it = kbdEventChains.begin(); it != kbdEventChains.end(); it++)
         (*it).second->removeHandler(handler);
@@ -302,7 +302,7 @@ void EventDispatcher::unregisterKeyboardHandler(KeyboardHandler* handler)
 // Unregister a handler for mouse events
 void EventDispatcher::unregisterMouseHandler(MouseHandler* handler)
 {
-    ScopedLock mecMutex(mecLock);
+    ScopedCriticalSection mecMutex(&mecLock);
     map<HANDLE, MouseEventChain*>::iterator it;
     for(it = mouseEventChains.begin(); it != mouseEventChains.end(); it++)
         (*it).second->removeHandler(handler);
@@ -311,7 +311,7 @@ void EventDispatcher::unregisterMouseHandler(MouseHandler* handler)
 // Add or get a mouse handler for a given regular expression and handler pair
 RexHandler* EventDispatcher::getMouseHandler(std::string regex, MouseHandler* handler)
 {
-    ScopedLock mMutex(mdHRMLock);
+    ScopedCriticalSection mMutex(&mdHRMLock);
 
     multimap<string, RexHandler*>::iterator it;
     pair<multimap<string, RexHandler*>::iterator, multimap<string, RexHandler*>::iterator> ret;
@@ -337,7 +337,7 @@ RexHandler* EventDispatcher::getMouseHandler(std::string regex, MouseHandler* ha
 // Add or get a keyboard handler for a given regular expression and handler pair
 RexHandler* EventDispatcher::getKeyboardHandler(string regex, KeyboardHandler* handler)
 {
-    ScopedLock kMutex(kbHRMLock);
+    ScopedCriticalSection kMutex(&kbHRMLock);
 
     multimap<string, RexHandler*>::iterator it;
     pair<multimap<string, RexHandler*>::iterator, multimap<string, RexHandler*>::iterator> ret;
@@ -363,7 +363,7 @@ RexHandler* EventDispatcher::getKeyboardHandler(string regex, KeyboardHandler* h
 // Clean up the mouse handler map
 void EventDispatcher::cleanupMouseHandlerMap()
 {
-    ScopedLock mMutex(mdHRMLock);
+    ScopedCriticalSection mMutex(&mdHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = mHandlerRexMap.begin(); it != mHandlerRexMap.end(); it++)
@@ -379,7 +379,7 @@ void EventDispatcher::cleanupMouseHandlerMap()
 // Clean up the mouse handler map
 void EventDispatcher::cleanupKeyboardHandlerMap()
 {
-    ScopedLock kMutex(kbHRMLock);
+    ScopedCriticalSection kMutex(&kbHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = kHandlerRexMap.begin(); it != kHandlerRexMap.end(); it++)
@@ -395,7 +395,7 @@ void EventDispatcher::cleanupKeyboardHandlerMap()
 // Clean up the mouse event chain map
 void EventDispatcher::cleanupMouseEventChainMap()
 {
-    ScopedLock mMutex(mecLock);
+    ScopedCriticalSection mMutex(&mecLock);
 
     map<HANDLE, MouseEventChain*>::iterator it;
     for(it = mouseEventChains.begin(); it != mouseEventChains.end(); it++)
@@ -406,7 +406,7 @@ void EventDispatcher::cleanupMouseEventChainMap()
 // Clean up the keyboard event chain map
 void EventDispatcher::cleanupKeyboardEventChainMap()
 {
-    ScopedLock kMutex(kecLock);
+    ScopedCriticalSection kMutex(&kecLock);
 
     map<HANDLE, KeyboardEventChain*>::iterator it;
     for(it = kbdEventChains.begin(); it != kbdEventChains.end(); it++)
@@ -417,7 +417,7 @@ void EventDispatcher::cleanupKeyboardEventChainMap()
 // Clear out the mouse device info map
 void EventDispatcher::cleanupMouseDeviceMap()
 {
-    ScopedLock mMutex(mdLock);
+    ScopedCriticalSection mMutex(&mdLock);
 
     map<HANDLE, MouseInfo*>::iterator it;
     for(it = mouseDevices.begin(); it != mouseDevices.end(); it++)
@@ -428,7 +428,7 @@ void EventDispatcher::cleanupMouseDeviceMap()
 // Clear out the keyboard device info map
 void EventDispatcher::cleanupKeyboardDeviceMap()
 {
-    ScopedLock kMutex(kdLock);
+    ScopedCriticalSection kMutex(&kdLock);
 
     map<HANDLE, KeyboardInfo*>::iterator it;
     for(it = keyboardDevices.begin() ; it != keyboardDevices.end(); it++)
@@ -439,7 +439,7 @@ void EventDispatcher::cleanupKeyboardDeviceMap()
 // A new mouse device has been added
 void EventDispatcher::newMouseDevice(MouseInfo* info)
 {
-    ScopedLock mMutex(mdHRMLock);
+    ScopedCriticalSection mMutex(&mdHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = mHandlerRexMap.begin(); it != mHandlerRexMap.end(); it++)
@@ -448,7 +448,7 @@ void EventDispatcher::newMouseDevice(MouseInfo* info)
         if(rh->rex->Match(info->name.c_str()))
         {
             // OK, we've got a registered handler for this device.
-            ScopedLock mecMutex(mecLock);
+            ScopedCriticalSection mecMutex(&mecLock);
             if(mouseEventChains.count(info->device) == 0)
                 mouseEventChains[info->device] = new MouseEventChain();
             mouseEventChains[info->device]->addHandler(rh->mhandler);
@@ -459,7 +459,7 @@ void EventDispatcher::newMouseDevice(MouseInfo* info)
 // A new keyboard device has been added
 void EventDispatcher::newKeyboardDevice(KeyboardInfo* info)
 {
-    ScopedLock kMutex(kbHRMLock);
+    ScopedCriticalSection kMutex(&kbHRMLock);
     multimap<string, RexHandler*>::iterator it;
 
     for(it = kHandlerRexMap.begin(); it != kHandlerRexMap.end(); it++)
@@ -468,7 +468,7 @@ void EventDispatcher::newKeyboardDevice(KeyboardInfo* info)
         if(rh->rex->Match(info->name.c_str()))
         {
             // OK, we've got a registered handler for this device.
-            ScopedLock kecMutex(kecLock);
+            ScopedCriticalSection kecMutex(&kecLock);
             if(kbdEventChains.count(info->device) == 0)
                 kbdEventChains[info->device] = new KeyboardEventChain();
             kbdEventChains[info->device]->addHandler(rh->khandler);
@@ -479,7 +479,7 @@ void EventDispatcher::newKeyboardDevice(KeyboardInfo* info)
 // A new keyboard event handler has been added
 void EventDispatcher::newKeyboardHandler(RexHandler* keHandler)
 {
-    ScopedLock kMutex(kdLock);
+    ScopedCriticalSection kMutex(&kdLock);
 
     map<HANDLE, KeyboardInfo*>::iterator it;
     for(it = keyboardDevices.begin(); it != keyboardDevices.end(); it++)
@@ -488,7 +488,7 @@ void EventDispatcher::newKeyboardHandler(RexHandler* keHandler)
         if(keHandler->rex->Match(info->name.c_str()))
         {
             // OK, our new handler can handle this device
-            ScopedLock kecMutex(kecLock);
+            ScopedCriticalSection kecMutex(&kecLock);
             if(kbdEventChains.count(info->device) == 0)
                 kbdEventChains[info->device] = new KeyboardEventChain();
             kbdEventChains[info->device]->addHandler(keHandler->khandler);
@@ -499,7 +499,7 @@ void EventDispatcher::newKeyboardHandler(RexHandler* keHandler)
 // A new mouse event handler has been added
 void EventDispatcher::newMouseHandler(RexHandler* meHandler)
 {
-    ScopedLock mMutex(mdHRMLock);
+    ScopedCriticalSection mMutex(&mdHRMLock);
 
     map<HANDLE, MouseInfo*>::iterator it;
     for(it = mouseDevices.begin(); it != mouseDevices.end(); it++)
@@ -508,7 +508,7 @@ void EventDispatcher::newMouseHandler(RexHandler* meHandler)
         if(meHandler->rex->Match(info->name.c_str()))
         {
             // OK, our new handler can handle this device
-            ScopedLock mecMutex(mecLock);
+            ScopedCriticalSection mecMutex(&mecLock);
             if(mouseEventChains.count(info->device) == 0)
                 mouseEventChains[info->device] = new MouseEventChain();
             mouseEventChains[info->device]->addHandler(meHandler->mhandler);
@@ -563,8 +563,8 @@ void EventDispatcher::scanDevices()
     {
         // Begin lock
 
-        ScopedLock kMutex(kdLock);
-        ScopedLock mMutex(mdLock);
+        ScopedCriticalSection kMutex(&kdLock);
+        ScopedCriticalSection mMutex(&mdLock);
 
         // Iterate over the raw devices
         for(UINT i = 0; i < nDevices; i++)

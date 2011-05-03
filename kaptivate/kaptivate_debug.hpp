@@ -31,6 +31,22 @@
 
 #pragma once
 
+#ifdef _DEBUG
+
 namespace Kaptivate
 {
+    class KaptivateDebug
+    {
+    private:
+        // Private singleton methods
+        KaptivateDebug();
+        ~KaptivateDebug();
+        static KaptivateDebug *singleton;
+
+    public:
+        static KaptivateDebug* getInstance();
+        static void destroyInstance();
+    };
 }
+
+#endif

@@ -35,3 +35,24 @@
 #include "scoped_mutex.hpp"
 
 using namespace Kaptivate;
+
+#ifdef _DEBUG
+
+KaptivateDebug::KaptivateDebug()
+{
+}
+
+KaptivateDebug::~KaptivateDebug()
+{
+}
+
+KaptivateDebug* KaptivateDebug::getInstance()
+{
+    return NULL;
+}
+
+void KaptivateDebug::destroyInstance()
+{
+}
+
+#endif

@@ -45,6 +45,9 @@
     <ClCompile Include="trex\trex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="kaptivate_debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="event_chain.hpp">
@@ -78,6 +81,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="trex\TRexpp.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="kaptivate_debug.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

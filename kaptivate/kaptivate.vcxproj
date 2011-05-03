@@ -102,6 +102,7 @@
     <ClCompile Include="event_queue.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="kaptivate.cpp" />
+    <ClCompile Include="kaptivate_debug.cpp" />
     <ClCompile Include="kaptivate_exceptions.cpp" />
     <ClCompile Include="scoped_mutex.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -116,6 +117,7 @@
     <ClInclude Include="event_queue.hpp" />
     <ClInclude Include="hooks.hpp" />
     <ClInclude Include="kaptivate.hpp" />
+    <ClInclude Include="kaptivate_debug.hpp" />
     <ClInclude Include="kaptivate_exceptions.hpp" />
     <ClInclude Include="scoped_mutex.hpp" />
     <ClInclude Include="stdafx.hpp" />

@@ -1,5 +1,5 @@
 /*
- * event_queue.hpp
+ * kaptivate_debug.cpp
  * This file is a part of Kaptivate
  * https://github.com/FunkyTownEnterprises/Kaptivate
  *
@@ -29,59 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "stdafx.hpp"
+#include "kaptivate_debug.hpp"
+#include "kaptivate_exceptions.hpp"
+#include "scoped_mutex.hpp"
 
-#include <queue>
-
-namespace Kaptivate
-{
-    class KeyboardEvent;
-    class MouseButtonEvent;
-    class MouseWheelEvent;
-    class MouseMoveEvent;
-
-    class EventQueue
-    {
-    private:
-        // Start / stop
-        bool stopped;
-
-        // Queues
-        std::queue<KeyboardEvent*> kbEventQueue;
-        std::queue<MouseButtonEvent*> mbEventQueue;
-        std::queue<MouseWheelEvent*> mwEventQueue;
-        std::queue<MouseMoveEvent*> mmEventQueue;
-
-        // Events
-        HANDLE mouseStopSignal;
-        HANDLE mouseEventSignal;
-        HANDLE kbdStopSignal;
-        HANDLE kbdEventSignal;
-        HANDLE mouseHandles[2];
-        HANDLE kbdHandles[2];
-
-        // Locks
-        CRITICAL_SECTION mouseQueueLock;
-        CRITICAL_SECTION kbdQueueLock;
-
-    public:
-        EventQueue();
-        ~EventQueue();
-
-        void start();
-        void stop();
-        bool running();
-
-        void EnqueueKeyboardEvent(KeyboardEvent* kbdEvent);
-        KeyboardEvent* DequeueKeyboardEvent();
-
-        void EnqueueMouseButtonEvent(MouseButtonEvent* mbEvent);
-        MouseButtonEvent* DequeueMouseButtonEvent();
-
-        void EnqueueMouseWheelEvent(MouseWheelEvent* mwEvent);
-        MouseWheelEvent* DequeueMouseWheelEvent();
-
-        void EnqueueMouseMoveEvent(MouseMoveEvent* mmEvent);
-        MouseMoveEvent* DequeueMouseMoveEvent();
-    };
-}
+using namespace Kaptivate;

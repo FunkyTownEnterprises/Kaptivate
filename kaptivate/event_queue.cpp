@@ -31,42 +31,131 @@
 
 #include "stdafx.hpp"
 #include "event_queue.hpp"
+#include "scoped_mutex.hpp"
 
 using namespace Kaptivate;
 
+// http://www.tidytutorials.com/2009/10/windows-c-producer-consumer-threaded.html
+// http://msdn.microsoft.com/en-us/library/ms687025(v=VS.85).aspx
+// http://dev-faqs.blogspot.com/2011/03/revisiting-producer-and-consumer.html
+
 EventQueue::EventQueue()
 {
+    this->kbdEventSignal = CreateEvent(NULL, TRUE, FALSE, NULL);
+    this->kbdStopSignal = CreateEvent(NULL, TRUE, FALSE, NULL);
+    this->kbdHandles[0] = this->kbdEventSignal;
+    this->kbdHandles[1] = this->kbdStopSignal;
+
+    this->mouseEventSignal = CreateEvent(NULL, TRUE, FALSE, NULL);
+    this->mouseStopSignal = CreateEvent(NULL, TRUE, FALSE, NULL);
+    this->mouseHandles[0] = this->mouseEventSignal;
+    this->mouseHandles[1] = this->mouseStopSignal;
+
+    this->stopped = true;
+
+    InitializeCriticalSection(&mouseQueueLock);
+    InitializeCriticalSection(&kbdQueueLock);
 }
 
 EventQueue::~EventQueue()
 {
+    stop();
+
+    CloseHandle(this->kbdEventSignal);
+    CloseHandle(this->kbdStopSignal);
+    CloseHandle(this->mouseEventSignal);
+    CloseHandle(this->mouseStopSignal);
+
+    this->kbdHandles[0] = 0;
+    this->kbdHandles[1] = 0;
+    this->mouseHandles[0] = 0;
+    this->mouseHandles[1] = 0;
+
+    DeleteCriticalSection(&mouseQueueLock);
+    DeleteCriticalSection(&kbdQueueLock);
+}
+
+void EventQueue::start()
+{
+    ScopedCriticalSection crit1(&mouseQueueLock);
+    ScopedCriticalSection crit2(&kbdQueueLock);
+    stopped = false;
+}
+
+void EventQueue::stop()
+{
+    ScopedCriticalSection crit1(&mouseQueueLock);
+    ScopedCriticalSection crit2(&kbdQueueLock);
+
+    if(stopped)
+        return;
+
+    stopped = true;
+
+    SetEvent(mouseStopSignal);
+    SetEvent(kbdStopSignal);
+}
+
+bool EventQueue::running()
+{
+    ScopedCriticalSection crit1(&mouseQueueLock);
+    ScopedCriticalSection crit2(&kbdQueueLock);
+    return !stopped;
 }
 
 void EventQueue::EnqueueKeyboardEvent(KeyboardEvent* kbdEvent)
 {
+    ScopedCriticalSection crit(&kbdQueueLock);
+    if(stopped)
+        return;
     kbEventQueue.push(kbdEvent);
+    SetEvent(kbdEventSignal);
 }
 
 KeyboardEvent* EventQueue::DequeueKeyboardEvent()
 {
-    if(kbEventQueue.empty())
+    ScopedCriticalSection crit(&kbdQueueLock);
+    if(stopped)
         return NULL;
+
+    while(kbEventQueue.empty() && !stopped)
+    {
+        {
+            ScopedNonCriticalSection uncrit(&kbdQueueLock);
+            if((DWORD)kbdEventSignal != WaitForMultipleObjects(2, kbdHandles, FALSE, INFINITE))
+                return NULL;
+        }
+    }
 
     KeyboardEvent* evt = kbEventQueue.front();
     kbEventQueue.pop();
-
     return evt;
 }
 
 void EventQueue::EnqueueMouseButtonEvent(MouseButtonEvent* mbEvent)
 {
+    ScopedCriticalSection crit(&mouseQueueLock);
+    if(stopped)
+        return;
     mbEventQueue.push(mbEvent);
+    SetEvent(mouseEventSignal);
 }
 
 MouseButtonEvent* EventQueue::DequeueMouseButtonEvent()
 {
-    if(mbEventQueue.empty())
+    ScopedCriticalSection crit(&mouseQueueLock);
+
+    if(stopped)
         return NULL;
+
+    while(mbEventQueue.empty() && !stopped)
+    {
+        {
+            ScopedNonCriticalSection uncrit(&mouseQueueLock);
+            if((DWORD)mouseEventSignal != WaitForMultipleObjects(2, mouseHandles, FALSE, INFINITE))
+                return NULL;
+        }
+    }
 
     MouseButtonEvent* evt = mbEventQueue.front();
     mbEventQueue.pop();
@@ -76,32 +165,18 @@ MouseButtonEvent* EventQueue::DequeueMouseButtonEvent()
 
 void EventQueue::EnqueueMouseWheelEvent(MouseWheelEvent* mwEvent)
 {
-    mwEventQueue.push(mwEvent);
 }
 
 MouseWheelEvent* EventQueue::DequeueMouseWheelEvent()
 {
-    if(mwEventQueue.empty())
-        return NULL;
-
-    MouseWheelEvent* evt = mwEventQueue.front();
-    mwEventQueue.pop();
-
-    return evt;
+    return NULL;
 }
 
 void EventQueue::EnqueueMouseMoveEvent(MouseMoveEvent* mmEvent)
 {
-    mmEventQueue.push(mmEvent);
 }
 
 MouseMoveEvent* EventQueue::DequeueMouseMoveEvent()
 {
-    if(mmEventQueue.empty())
-        return NULL;
-
-    MouseMoveEvent* evt = mmEventQueue.front();
-    mmEventQueue.pop();
-
-    return evt;
+    return NULL;
 }

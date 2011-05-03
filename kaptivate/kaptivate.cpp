@@ -182,22 +182,15 @@ LRESULT KaptivateAPI::ProcessKeyboardHook(HWND hWnd, WPARAM wParam, LPARAM lPara
     unsigned int vkey = (unsigned int)wParam & 255;
     unsigned int scanCode = (((unsigned int)lParam) >> 16) & 255;
 
-    KeyboardEvent* evt = NULL;
-
-    do
-    {
-        // TODO: Implement new kind of wait
-        //evt = events->DequeueKeyboardEvent();
+    KeyboardEvent* evt = events->DequeueKeyboardEvent();
+    if(NULL == evt)
         return 0;
-
-        // TODO: Make sure it's the one we're waiting for
-
-    } while(evt == NULL);
 
     LRESULT retCode = 0; // 0 means pass along
     dispatcher->handleKeyboard(*evt);
     if(evt->getDecision() == CONSUME)
         retCode = 1; // 1 means consume
+
     delete evt;
     return retCode;
 }
@@ -458,6 +451,7 @@ void KaptivateAPI::startCapture(bool wantMouse, bool wantKeyboard, bool startSus
     if(running)
         throw KaptivateException("Kaptivate is already running");
     suspended = startSuspended;
+    events->start();
 
     {
         // Set up the hook message loop thread
@@ -538,7 +532,10 @@ void KaptivateAPI::stopCapture()
     if(!running)
         throw KaptivateException("Kaptivate is not running");
 
-    // First stop any further messages from being generated
+    // First stop the event queue
+    events->stop();
+
+    // Next stop any further messages from being generated
     if(0 != kaptivateHookUninit())
         throw KaptivateException("Failed to uninitialize the hooks");
 
